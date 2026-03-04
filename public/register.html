@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Asset Management</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <div class="auth-layout">
+    <section class="auth-hero">
+      <div class="auth-hero-inner">
+        <h1>Create an account for your asset workspace</h1>
+        <p class="auth-hero-tagline">Give your team a shared, up-to-date view of every important item you manage.</p>
+        <p class="auth-hero-subtext">
+          Use this registration page to create your personal login. When you are the first person to register in a new
+          database, you will automatically become an Admin. After that, existing admins can promote or demote users
+          from inside the dashboard.
+        </p>
+        <ul class="auth-feature-list">
+          <li>Register with your real name and work email so colleagues can recognize your updates.</li>
+          <li>Each login is personal, so actions like creating, editing, or disposing assets can be traced to a user.</li>
+          <li>Admins can manage who has admin rights without touching the database or calling IT.</li>
+        </ul>
+        <p class="auth-meta">
+          Tip: use a strong password you can remember. This account gives you access to sensitive information about
+          institution-owned assets.
+        </p>
+      </div>
+    </section>
+
+    <section class="container auth-container auth-panel">
+      <h2>Register a new user</h2>
+      <p class="auth-hero-subtext">
+        Fill in your details to create an account. If this is the very first account in the system, you will be given
+        Admin rights automatically. Otherwise, you will start as a Standard User and an Admin can promote you later.
+      </p>
+      <form id="registerForm">
+        <input type="text" id="username" placeholder="Full name (e.g. Jane Doe)" required>
+        <input type="email" id="email" placeholder="Work email (e.g. you@organization.edu)" required>
+        <input type="password" id="password" placeholder="Choose a password" required>
+        <button type="submit">Create account</button>
+      </form>
+      <p id="message"></p>
+      <p>Already have an account? <a href="login.html">Sign in here</a>.</p>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

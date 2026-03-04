@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Register - Asset Management System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: Arial; background: #f4f4f7; display: flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.register-box { background:white; padding:40px; border-radius:12px; box-shadow:0 0 15px rgba(0,0,0,0.1); text-align:center; width:320px; }
+h2 { margin-bottom:25px; color:#28a745; font-size:24px; font-weight:bold; }
+input { width:100%; padding:10px; margin:10px 0; border-radius:6px; border:1px solid #ccc; font-size:16px; }
+button { width:100%; padding:10px; margin:10px 0; border:none; border-radius:6px; background:#28a745; color:white; font-weight:bold; cursor:pointer; font-size:16px; }
+button:hover { background:#1e7e34; }
+.back-btn { background:#0d6efd; }
+.back-btn:hover { background:#094cba; }
+#error { color:red; margin-top:10px; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div class="register-box">
+<h2>REGISTER</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password (min 6 chars)">
+<input type="password" id="confirm" placeholder="Confirm Password">
+<button onclick="register()">Register</button>
+<button class="back-btn" onclick="window.location.href='login.html'">Back to Login</button>
+<p id="error"></p>
+</div>
+
+<script>
+function isValidEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function register(){
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const confirm = document.getElementById('confirm').value.trim();
+    const errorEl = document.getElementById('error');
+
+    if(!username || !email || !password || !confirm){
+        errorEl.innerText = "All fields are required";
+        return;
+    }
+    if(!isValidEmail(email)){
+        errorEl.innerText = "Invalid email format";
+        return;
+    }
+    if(password.length < 6){
+        errorEl.innerText = "Password must be at least 6 characters";
+        return;
+    }
+    if(password !== confirm){
+        errorEl.innerText = "Passwords do not match";
+        return;
+    }
+
+    try{
+        const res = await fetch('http://localhost:3000/register',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({username,email,password})
+        });
+        const data = await res.json();
+        if(res.ok){
+            alert(data.msg);
+            window.location.href='login.html';
+        } else {
+            errorEl.innerText = data.msg;
+        }
+    }catch(err){
+        errorEl.innerText = "Server error";
+    }
+}
+</script>
+
+</body>
+</html>

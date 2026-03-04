@@ -1,0 +1,59 @@
+/* Full CSS from your final version */
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  color: #333;
+}
+
+.container {
+  width: 85%;
+  max-width: 1200px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1,h2,h3 { color: #1f3c88; margin-bottom: 20px; }
+
+form input,form button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  transition: all 0.3s;
+}
+
+form input:focus { border-color: #1f3c88; outline: none; }
+form button { background: #1f3c88; color: white; cursor: pointer; border: none; font-weight: bold; transition: background 0.3s; }
+form button:hover { background: #154a8f; }
+
+.auth-container { max-width: 400px; margin: 60px auto; padding: 20px; }
+#message { text-align: center; margin-top: 10px; font-weight: 500; color: red; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 25px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+thead { background: #1f3c88; color: #fff; }
+th,td { padding: 12px 15px; text-align: left; }
+tbody tr:nth-child(even) { background: #f4f7fa; }
+
+.action-btn { padding: 6px 10px; margin-right: 5px; border: none; border-radius: 5px; cursor: pointer; color: #fff; transition: all 0.3s; }
+.edit-btn { background: #28a745; }
+.edit-btn:hover { background: #1e7e34; }
+.delete-btn { background: #dc3545; }
+.delete-btn:hover { background: #c82333; }
+
+#assetForm { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
+#assetForm input,#assetForm button { flex: 1 1 200px; border-radius: 6px; border: 1px solid #ddd; padding: 10px; }
+#assetForm button { flex: 1 1 100px; background-color: #1f3c88; font-weight: bold; }
+#assetForm button:hover { background-color: #154a8f; }
+
+.dashboard-container h2,.dashboard-container h3 { color: #1f3c88; margin-bottom: 15px; }
+button.logout-btn { background-color: #e74c3c; float: right; padding: 10px 15px; border: none; border-radius: 6px; color: white; cursor: pointer; transition: background 0.3s; }
+button.logout-btn:hover { background-color: #c0392b; }
+
+@media(max-width:768px){#assetForm{flex-direction:column}.container{width:95%; padding:20px} table,th,td{font-size:14px}}

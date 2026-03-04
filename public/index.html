@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Management System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <h1>Asset Management System</h1>
+
+    <!-- Add Asset Form -->
+    <form id="assetForm">
+      <h2>Add New Asset</h2>
+
+      <input type="text" id="name" placeholder="Asset Name" required />
+      <input type="text" id="description" placeholder="Description" required />
+      <input type="text" id="location" placeholder="Location" required />
+      <input type="text" id="status" placeholder="Status (e.g., Active)" required />
+      
+      <button type="submit">Add Asset</button>
+    </form>
+
+    <h2>Assets List</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="assetsTableBody"></tbody>
+    </table>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

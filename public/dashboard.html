@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asset Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container dashboard-container">
+    <div class="dashboard-header">
+      <div class="dashboard-header-main">
+        <h1>Welcome, <span id="usernameDisplay"></span></h1>
+        <p class="dashboard-intro">Register assets, track where they are, log maintenance, and keep a simple record of disposals.</p>
+        <p class="dashboard-role" id="roleDisplay"></p>
+        <p class="dashboard-role" id="roleHelper"></p>
+      </div>
+      <button id="logoutBtn" class="logout-btn">Logout</button>
+    </div>
+
+    <!-- Primary action: register a new asset -->
+    <button id="toggleAssetFormBtn" class="primary-btn">+ Register Asset</button>
+
+    <section id="assetFormSection" class="section card hidden">
+      <h2>Register New Asset</h2>
+      <p class="section-helper">Create a clear record for each physical asset so you can track where it is, who is responsible, and what it is worth.</p>
+      <p class="section-helper">If you are unsure about some details, just use your best estimate. You can always update the asset later.</p>
+      <form id="assetForm">
+        <input type="text" id="name" placeholder="Asset Name (e.g., Dell Laptop)" required>
+        <input type="text" id="category" placeholder="Category (e.g., Laptop, Furniture)" required>
+        <input type="text" id="department" placeholder="Owning Department (e.g., IT, Finance, Shared)"
+        >
+        <select id="status" required>
+          <option value="Available">Available</option>
+          <option value="In Use">In Use</option>
+          <option value="Under Maintenance">Under Maintenance</option>
+          <option value="Disposed">Disposed</option>
+        </select>
+        <input type="number" id="value" placeholder="Asset Value (approximate, 0 if unknown)" required>
+        <input type="text" id="assignedTo" placeholder="Person responsible (optional)">
+        <input type="date" id="dateAcquired" placeholder="Date Acquired" required>
+        <button type="submit">Add Asset</button>
+      </form>
+    </section>
+
+    <!-- Core workspace: list of assets -->
+    <section class="section">
+      <div class="section-header">
+        <h2>Assets</h2>
+        <p class="section-helper">Use the actions next to each asset to edit details, transfer location, log maintenance, or mark it as disposed.</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Value</th>
+            <th>Date Acquired</th>
+            <th>Location</th>
+            <th>Assigned To</th>
+            <th>Department</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="assetsTableBody">
+          <!-- Assets will be loaded here dynamically -->
+        </tbody>
+      </table>
+    </section>
+
+    <section id="adminSection" class="section card hidden">
+      <h2>User Management (Admin only)</h2>
+      <p class="section-helper">Admins can promote or demote users here. Use this to give other people admin access without touching the database.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <!-- Users will load here for admins -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Inline edit panel for assets -->
+    <section id="editAssetPanel" class="section card hidden">
+      <h2>Edit Asset</h2>
+      <p class="section-helper">Update the core details for this asset. To mark an asset as disposed, still use the Dispose section under Transfers &amp; Disposal so the system records a proper disposal history.</p>
+      <form id="editAssetForm">
+        <input type="hidden" id="editAssetId">
+
+        <label for="editName" class="field-label">Asset Name</label>
+        <input type="text" id="editName" required>
+
+        <label for="editCategory" class="field-label">Category</label>
+        <input type="text" id="editCategory" placeholder="e.g. Laptop, Projector" required>
+
+        <label for="editDepartment" class="field-label">Department</label>
+        <input type="text" id="editDepartment" placeholder="e.g. IT, Finance, Library">
+
+        <label for="editLocation" class="field-label">Location</label>
+        <input type="text" id="editLocation" placeholder="e.g. Lab 2, Office 3B">
+
+        <label for="editAssignedTo" class="field-label">Person responsible</label>
+        <input type="text" id="editAssignedTo" placeholder="e.g. John Doe">
+
+        <label for="editValue" class="field-label">Estimated value</label>
+        <input type="number" id="editValue" min="0" step="0.01">
+
+        <label for="editStatus" class="field-label">Status</label>
+        <select id="editStatus" required>
+          <option value="Available">Available</option>
+          <option value="In Use">In Use</option>
+          <option value="Under Maintenance">Under Maintenance</option>
+        </select>
+
+        <button type="submit">Save Changes</button>
+        <button type="button" id="cancelEditBtn">Cancel</button>
+      </form>
+    </section>
+
+    <!-- Advanced actions grouped below the main table -->
+    <details class="section-details">
+      <summary>Transfers &amp; Disposal</summary>
+      <div class="section card">
+        <h2>Transfer Asset</h2>
+        <p class="section-helper">Use when an asset moves to a different physical location (for example, another office or department).</p>
+        <form id="transferForm">
+          <select id="transferAssetId" required></select>
+          <input type="text" id="newLocation" placeholder="New Location" required>
+          <button type="submit">Transfer</button>
+        </form>
+
+        <h2>Dispose Asset</h2>
+        <p class="section-helper">Mark an asset as disposed and record why. The record stays in the system for reporting. Only admins can dispose assets.</p>
+        <form id="disposeForm">
+          <select id="disposeAssetId" required></select>
+          <input type="text" id="disposeReason" placeholder="Reason for Disposal" required>
+          <button type="submit" id="disposeSubmitBtn">Mark as Disposed</button>
+        </form>
+      </div>
+    </details>
+
+    <details class="section-details">
+      <summary>Maintenance &amp; History</summary>
+      <div class="section card">
+        <h2>Log Maintenance / Repairs</h2>
+        <p class="section-helper">Use this form to record maintenance for a specific asset.</p>
+        <form id="maintenanceForm">
+          <label for="maintenanceAssetId" class="field-label">Select asset to log maintenance</label>
+          <select id="maintenanceAssetId" required></select>
+          <input type="text" id="maintenanceDescription" placeholder="Maintenance Description" required>
+          <input type="date" id="maintenanceDate" placeholder="Maintenance Date">
+          <input type="number" id="maintenanceCost" placeholder="Cost (optional)">
+          <button type="submit">Log Maintenance</button>
+        </form>
+
+        <div class="history-selector">
+          <label for="historyAssetId" class="field-label">View history for asset</label>
+          <select id="historyAssetId"></select>
+        </div>
+
+        <h2>Maintenance History</h2>
+        <p class="section-helper">Shows all maintenance logged for the selected asset.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Asset</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Cost</th>
+            </tr>
+          </thead>
+          <tbody id="maintenanceTableBody">
+            <!-- Maintenance records will load here -->
+          </tbody>
+        </table>
+        <h2>Asset Activity Trail</h2>
+        <p class="section-helper">Overview of acquisitions, disposals, and maintenance for the same selected asset.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Action</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="auditTableBody">
+            <!-- Audit events will load here -->
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="section-details">
+      <summary>Summary &amp; Reports</summary>
+      <div id="summary" class="summary-container">
+        <h3>Summary</h3>
+        <p class="section-helper">High-level view of your asset records. Add assets and activity to see these numbers grow.</p>
+        <div class="summary-totals">
+          <p>Total Assets: <span id="summaryTotalAssets">0</span></p>
+          <p>Total Acquisitions: <span id="summaryTotalAcquisitions">0</span></p>
+          <p>Total Disposals: <span id="summaryTotalDisposals">0</span></p>
+          <p>Total Maintenance Records: <span id="summaryTotalMaintenance">0</span></p>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <h4>By Status</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody id="summaryStatusBody"></tbody>
+            </table>
+          </div>
+
+          <div class="summary-card">
+            <h4>By Category</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody id="summaryCategoryBody"></tbody>
+            </table>
+          </div>
+
+          <div class="summary-card">
+            <h4>By Department</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody id="summaryDepartmentBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Display username
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    const username = localStorage.getItem("username");
+    const roleDisplay = document.getElementById("roleDisplay");
+    const roleHelper = document.getElementById("roleHelper");
+    const role = localStorage.getItem("role") || "user";
+    if (usernameDisplay && username) {
+      usernameDisplay.innerText = username;
+    }
+    if (roleDisplay) {
+      const isAdmin = role === 'admin';
+      roleDisplay.innerText = isAdmin
+        ? 'You are signed in as Admin'
+        : 'You are signed in as Standard User';
+
+      if (roleHelper) {
+        roleHelper.textContent = isAdmin
+          ? 'As an admin, you can register and edit assets, transfer them, log maintenance, dispose and delete assets, and manage other users\' roles.'
+          : 'As a standard user, you can register and edit assets, transfer them, and log maintenance, but you cannot delete or dispose assets or change user roles.';
+      }
+    }
+  </script>
+</body>
+</html>

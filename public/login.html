@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Asset Management</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <div class="auth-layout">
+    <section class="auth-hero">
+      <div class="auth-hero-inner">
+        <h1>Smart Asset Manager</h1>
+        <p class="auth-hero-tagline">Know where every asset is, who has it, and what it’s worth – in one clear view.</p>
+        <p class="auth-hero-subtext">
+          Built for universities and organizations that are tired of chasing asset information across spreadsheets,
+          notebooks, and memory. This dashboard keeps everything in one organized place for day‑to‑day work and audits.
+        </p>
+        <ul class="auth-feature-list">
+          <li>Register laptops, lab equipment, and furniture in seconds.</li>
+          <li>See who is responsible for each item and where it lives.</li>
+          <li>Log maintenance and repairs so nothing is forgotten.</li>
+          <li>Mark items as disposed while keeping a clean history trail.</li>
+          <li>Promote trusted staff to admin directly from the dashboard.</li>
+        </ul>
+        <p class="auth-meta">
+          Asset records often start as many different spreadsheets, notebooks, or verbal promises. This system brings
+          those pieces together into one clear history for each item, so audits, handovers, and management decisions
+          become simpler and faster.
+        </p>
+      </div>
+    </section>
+
+    <section class="container auth-container auth-panel">
+      <h2>Sign in to your asset dashboard</h2>
+      <p class="auth-hero-subtext">
+        Use your registered email and password to continue. Your role (Admin or Standard User) will be applied
+        automatically when you log in.
+      </p>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Work email (e.g. you@organization.edu)" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="message"></p>
+      <p>
+        New here? <a href="register.html">Create an account</a> to start recording your assets.
+      </p>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
