@@ -80,7 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
               <td>${asset.category}</td>
               <td>${getStatusBadge(asset.status)}</td>
               <td>${asset.assignedTo ? asset.assignedTo.username : 'N/A'}</td>
-              <td>${asset.department || 'N/A'}</td>
+              <td>
+                ${asset.department || 'N/A'}
+                ${role === 'admin' ? `
+                  <button class="edit-btn" onclick="openEditAsset('${asset._id}', '${asset.description}', '${asset.itemID}', '${asset.serialNumber}', '${asset.category}', ${asset.value}, '${asset.location || ''}', '${asset.status}')">Edit</button>
+                  <button class="delete-btn" onclick="deleteAsset('${asset._id}')">Delete</button>
+                ` : ''}
+              </td>
             </tr>
           `).join('');
         }
@@ -111,7 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const allSections = [
     'registerSection', 'allocationSection', 'disposalSection', 
     'usersSection', 'adminReportsSection', 'searchResults',
-    'requestSection', 'returnSection', 'maintenanceSection', 'userReportsSection'
+    'requestSection', 'returnSection', 'maintenanceSection', 'userReportsSection',
+    'editAssetSection', 'editUserSection'
   ];
 
   const showSection = (sectionId) => {
@@ -247,13 +254,129 @@ document.addEventListener('DOMContentLoaded', () => {
             <td>${u.department}</td>
             <td>${getStatusBadge(u.role)}</td>
             <td>
+              <button onclick="openEditUser('${u._id}', '${u.username}', '${u.email}', '${u.staffID}', '${u.department}', '${u.role}')">Edit</button>
               ${u.role === 'user' ? `<button onclick="updateRole('${u._id}', 'admin')">Make Admin</button>` : `<button onclick="updateRole('${u._id}', 'user')">Make User</button>`}
+              <button class="delete-btn" onclick="deleteUser('${u._id}')">Delete</button>
             </td>
           </tr>
         `).join('');
       }
     }
   };
+
+  window.deleteAsset = async (id) => {
+    if (!confirm('Are you sure you want to delete this asset PERMANENTLY? This will be logged in the audit trail.')) return;
+    const res = await fetch(`/api/assets/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      alert('Asset deleted');
+      fetchAssets();
+      if (document.getElementById('adminReportsSection').classList.contains('hidden') === false) fetchAdminReports();
+    } else {
+      const err = await res.json();
+      alert(err.error);
+    }
+  };
+
+  window.deleteUser = async (id) => {
+    if (!confirm('Are you sure you want to delete this user PERMANENTLY? This will be logged in the audit trail.')) return;
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      alert('User deleted');
+      fetchUserTable();
+      if (document.getElementById('adminReportsSection').classList.contains('hidden') === false) fetchAdminReports();
+    } else {
+      const err = await res.json();
+      alert(err.error);
+    }
+  };
+
+  window.openEditAsset = (id, desc, itemID, sn, cat, val, loc, status) => {
+    showSection('editAssetSection');
+    document.getElementById('editAssetId').value = id;
+    document.getElementById('editAssetDescription').value = desc;
+    document.getElementById('editAssetItemID').value = itemID;
+    document.getElementById('editAssetSerialNumber').value = sn;
+    document.getElementById('editAssetCategory').value = cat;
+    document.getElementById('editAssetValue').value = val;
+    document.getElementById('editAssetLocation').value = loc;
+    document.getElementById('editAssetStatus').value = status;
+  };
+
+  const editAssetForm = document.getElementById('editAssetForm');
+  if (editAssetForm) {
+    editAssetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editAssetId').value;
+      const data = {
+        description: document.getElementById('editAssetDescription').value,
+        itemID: document.getElementById('editAssetItemID').value,
+        serialNumber: document.getElementById('editAssetSerialNumber').value,
+        category: document.getElementById('editAssetCategory').value,
+        value: document.getElementById('editAssetValue').value,
+        location: document.getElementById('editAssetLocation').value,
+        status: document.getElementById('editAssetStatus').value
+      };
+
+      const res = await fetch(`/api/assets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Asset Updated');
+        showSection(''); // Hide all
+        fetchAssets();
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    });
+  }
+
+  window.openEditUser = (id, username, email, staffID, dept, role) => {
+    showSection('editUserSection');
+    document.getElementById('editUserId').value = id;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editUserEmail').value = email;
+    document.getElementById('editUserStaffID').value = staffID;
+    document.getElementById('editUserDepartment').value = dept;
+    document.getElementById('editUserRole').value = role;
+  };
+
+  const editUserForm = document.getElementById('editUserForm');
+  if (editUserForm) {
+    editUserForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editUserId').value;
+      const data = {
+        username: document.getElementById('editUsername').value,
+        email: document.getElementById('editUserEmail').value,
+        staffID: document.getElementById('editUserStaffID').value,
+        department: document.getElementById('editUserDepartment').value,
+        role: document.getElementById('editUserRole').value
+      };
+
+      const res = await fetch(`/api/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('User Updated');
+        showSection('usersSection'); // Go back to users list
+        fetchUserTable();
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    });
+  }
 
   window.updateRole = async (userId, role) => {
     if (!confirm(`Are you sure you want to change this user's role to ${role}?`)) return;
@@ -340,6 +463,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <button onclick="updateMaintenance('${m._id}', 'In Progress')">Start</button>
             <button onclick="updateMaintenance('${m._id}', 'Completed')">Complete</button>
           </td>
+        </tr>
+      `).join('');
+    }
+
+    const auditBody = document.getElementById('deletionAuditTable').querySelector('tbody');
+    if (!checkEmpty(data.deletionLogs, auditBody, 5)) {
+      auditBody.innerHTML = data.deletionLogs.map(log => `
+        <tr>
+          <td>${log.action}</td>
+          <td>${log.targetName}</td>
+          <td>${log.details}</td>
+          <td>${log.performedByName}</td>
+          <td>${new Date(log.createdAt).toLocaleString()}</td>
         </tr>
       `).join('');
     }

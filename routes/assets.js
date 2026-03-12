@@ -4,6 +4,7 @@ const Asset = require("../models/Asset");
 const Request = require("../models/Request");
 const Return = require("../models/Return");
 const User = require("../models/User");
+const AuditLog = require("../models/AuditLog");
 const auth = require("../middleware/auth");
 
 // Get all assets
@@ -48,10 +49,39 @@ router.post("/", auth, auth.requireAdmin, async (req, res) => {
 // Update asset (Admin only)
 router.put("/:id", auth, auth.requireAdmin, async (req, res) => {
   try {
-    const asset = await Asset.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!asset) return res.status(404).json({ error: "Asset not found" });
-    res.json(asset);
+    const { description, itemID, serialNumber, category, value, location, status } = req.body;
+    const assetToUpdate = await Asset.findById(req.params.id);
+    if (!assetToUpdate) return res.status(404).json({ error: "Asset not found" });
+
+    // Prepare audit log
+    const changes = [];
+    if (description && description !== assetToUpdate.description) changes.push(`description: ${assetToUpdate.description} -> ${description}`);
+    if (itemID && itemID !== assetToUpdate.itemID) changes.push(`itemID: ${assetToUpdate.itemID} -> ${itemID}`);
+    if (serialNumber && serialNumber !== assetToUpdate.serialNumber) changes.push(`serialNumber: ${assetToUpdate.serialNumber} -> ${serialNumber}`);
+    if (category && category !== assetToUpdate.category) changes.push(`category: ${assetToUpdate.category} -> ${category}`);
+    if (value && value !== assetToUpdate.value) changes.push(`value: ${assetToUpdate.value} -> ${value}`);
+    if (location && location !== assetToUpdate.location) changes.push(`location: ${assetToUpdate.location} -> ${location}`);
+    if (status && status !== assetToUpdate.status) changes.push(`status: ${assetToUpdate.status} -> ${status}`);
+
+    if (changes.length > 0) {
+      const newLog = new AuditLog({
+        action: 'Update Asset',
+        targetId: assetToUpdate._id,
+        targetName: assetToUpdate.description || 'Unknown Asset',
+        details: `Changes: ${changes.join(', ')}`,
+        performedBy: req.user.id,
+        performedByName: req.user.username || 'Admin'
+      });
+      await newLog.save();
+    }
+
+    const updatedAsset = await Asset.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedAsset);
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ error: "Item ID or Serial Number already exists" });
+    }
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -95,9 +125,32 @@ router.post("/:id/dispose", auth, auth.requireAdmin, async (req, res) => {
 // Delete asset (Admin only)
 router.delete("/:id", auth, auth.requireAdmin, async (req, res) => {
   try {
+    const assetToDelete = await Asset.findById(req.params.id).populate('assignedTo', 'username staffID department');
+    if (!assetToDelete) return res.status(404).json({ error: "Asset not found" });
+
+    // Prepare rich details
+    let details = `ItemID: ${assetToDelete.itemID}, S/N: ${assetToDelete.serialNumber}, Category: ${assetToDelete.category}, Value: ${assetToDelete.value}`;
+    if (assetToDelete.assignedTo) {
+      details += ` | WAS ALLOCATED TO: ${assetToDelete.assignedTo.username} (${assetToDelete.assignedTo.staffID}) in ${assetToDelete.assignedTo.department}`;
+    } else {
+      details += ` | Status: ${assetToDelete.status}`;
+    }
+
+    // Log the action before deleting
+    const newLog = new AuditLog({
+      action: 'Delete Asset',
+      targetId: assetToDelete._id,
+      targetName: assetToDelete.description || 'Unknown Asset',
+      details: details,
+      performedBy: req.user.id,
+      performedByName: req.user.username || 'Admin'
+    });
+    await newLog.save();
+
     await Asset.findByIdAndDelete(req.params.id);
     res.json({ message: "Asset deleted" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });

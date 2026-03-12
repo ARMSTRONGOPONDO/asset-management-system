@@ -60,11 +60,16 @@
       <section id="registerSection" class="section card hidden">
         <h2>Register New Item</h2>
         <form id="registerItemForm">
-          <input type="text" id="regItemID" placeholder="Item ID" required>
-          <input type="text" id="regDescription" placeholder="Item Description" required>
-          <input type="text" id="regSerialNumber" placeholder="Item Serial Number" required>
-          <input type="text" id="regCategory" placeholder="Category" required>
-          <input type="number" id="regValue" placeholder="Value" required>
+          <label>Item ID (Unique Tag):</label>
+          <input type="text" id="regItemID" placeholder="e.g., LPT-001" required>
+          <label>Item Name / Description:</label>
+          <input type="text" id="regDescription" placeholder="e.g., Dell Latitude Laptop" required>
+          <label>Item Serial Number:</label>
+          <input type="text" id="regSerialNumber" placeholder="S/N" required>
+          <label>Category:</label>
+          <input type="text" id="regCategory" placeholder="e.g., Electronics" required>
+          <label>Monetary Value (Price):</label>
+          <input type="number" id="regValue" placeholder="Total Cost / Price" required>
           <button type="submit">Register Item</button>
           <button type="button" class="cancel-btn">Cancel</button>
         </form>
@@ -98,9 +103,38 @@
         </form>
       </section>
 
-      <!-- Manage Roles -->
+      <!-- Edit Asset Form -->
+      <section id="editAssetSection" class="section card hidden">
+        <h2>Edit Asset Info</h2>
+        <form id="editAssetForm">
+          <input type="hidden" id="editAssetId">
+          <label>Item Name / Description:</label>
+          <input type="text" id="editAssetDescription" required>
+          <label>Item ID (Unique Tag):</label>
+          <input type="text" id="editAssetItemID" required>
+          <label>Item Serial Number:</label>
+          <input type="text" id="editAssetSerialNumber" required>
+          <label>Category:</label>
+          <input type="text" id="editAssetCategory" required>
+          <label>Monetary Value (Price):</label>
+          <input type="number" id="editAssetValue" required>
+          <label>Location:</label>
+          <input type="text" id="editAssetLocation">
+          <label>Status:</label>
+          <select id="editAssetStatus">
+            <option value="Available">Available</option>
+            <option value="Allocated">Allocated</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Disposed">Disposed</option>
+          </select>
+          <button type="submit">Update Asset</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Manage Roles (Also now Edit User) -->
       <section id="usersSection" class="section card hidden">
-        <h2>Manage User Roles</h2>
+        <h2>Manage Users</h2>
         <table>
           <thead>
             <tr>
@@ -114,6 +148,29 @@
           <tbody id="userTableBody"></tbody>
         </table>
         <button type="button" class="cancel-btn">Close</button>
+      </section>
+
+      <!-- Edit User Form -->
+      <section id="editUserSection" class="section card hidden">
+        <h2>Edit User Info</h2>
+        <form id="editUserForm">
+          <input type="hidden" id="editUserId">
+          <label>Username:</label>
+          <input type="text" id="editUsername" required>
+          <label>Email:</label>
+          <input type="email" id="editUserEmail" required>
+          <label>Staff ID:</label>
+          <input type="text" id="editUserStaffID" required>
+          <label>Department:</label>
+          <input type="text" id="editUserDepartment" required>
+          <label>Role:</label>
+          <select id="editUserRole">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit">Update User</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
       </section>
 
       <!-- Admin Reports -->
@@ -162,6 +219,22 @@
             <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
+
+          <div id="deletionAuditSection">
+            <h3>Deletion Audit Log (Audit Trail)</h3>
+            <table id="deletionAuditTable">
+              <thead>
+                <tr>
+                  <th>Action</th>
+                  <th>Target Name</th>
+                  <th>Details</th>
+                  <th>Performed By</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
         <button type="button" class="cancel-btn">Close</button>
       </section>

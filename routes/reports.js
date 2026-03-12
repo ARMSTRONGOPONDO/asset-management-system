@@ -4,6 +4,7 @@ const Asset = require('../models/Asset');
 const Request = require('../models/Request');
 const Return = require('../models/Return');
 const Maintenance = require('../models/Maintenance');
+const AuditLog = require('../models/AuditLog');
 const auth = require('../middleware/auth');
 
 // Get admin dashboard statistics and lists
@@ -17,7 +18,8 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       requestedItems,
       returnMarkedItems,
       pendingMaintenance,
-      fullInventory
+      fullInventory,
+      deletionLogs
     ] = await Promise.all([
       Asset.countDocuments(),
       Request.countDocuments(),
@@ -26,7 +28,8 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       Request.find({ status: 'Pending' }).populate('requestedBy', 'username staffID department'),
       Return.find({ status: 'Pending' }).populate('asset').populate('returnedBy', 'username staffID department'),
       Maintenance.find({ status: 'Pending' }).populate('asset').populate('requestedBy', 'username staffID department'),
-      Asset.find().populate('assignedTo', 'username staffID department')
+      Asset.find().populate('assignedTo', 'username staffID department'),
+      AuditLog.find().sort({ createdAt: -1 })
     ]);
 
     res.json({
@@ -39,7 +42,8 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       requestedItems,
       returnMarkedItems,
       pendingMaintenance,
-      fullInventory
+      fullInventory,
+      deletionLogs
     });
   } catch (err) {
     console.error(err);

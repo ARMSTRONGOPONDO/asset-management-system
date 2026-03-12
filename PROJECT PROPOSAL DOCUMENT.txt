@@ -1,285 +1,0 @@
-﻿
-ASSET MANAGEMENT PROJECT
-NAME: CLIVE KHISA
-ADM NO: SB30/PU/40144/22
-
-CHAPTER ONE
-INTRODUCTION
-1.1 Background of the Study
-Asset management refers to the systematic process of developing, operating, maintaining, upgrading, and disposing of organizational assets in a cost-effective manner. Assets such as computers, laboratory equipment, furniture, vehicles, and network infrastructure play a critical role in supporting service delivery and operational efficiency in modern organizations. With the increasing adoption of information technology, organizations are continuously acquiring assets that require proper tracking, monitoring, and control throughout their lifecycle.
-Traditionally, many institutions have relied on manual or semi-automated methods such as paper-based records and spreadsheets to manage assets. While these methods may be adequate for small organizations, they become inefficient, error-prone, and difficult to scale as the number of assets increases. Common challenges associated with manual asset management include loss of records, inaccurate asset valuation, poor maintenance tracking, duplication of assets, and limited accountability.
-In recent years, computerized asset management systems have emerged as effective tools for addressing these challenges. Such systems provide centralized storage of asset information, real-time tracking, automated reporting, and enhanced security. By leveraging database and web-based technologies, organizations are able to improve transparency, reduce operational costs, and support informed decision-making.
-This proposed project seeks to develop an Asset Management System that will automate the process of registering, tracking, and managing organizational assets. The system will be designed to support efficient asset allocation, maintenance scheduling, and reporting, thereby improving overall asset utilization and accountability within the organization.
-1.2 Problem Statement
-Effective management of organizational assets remains a significant challenge in many institutions due to the continued reliance on manual or poorly integrated systems. Asset records are often scattered across different departments, leading to inconsistencies, duplication of data, and difficulties in tracking asset location, condition, and ownership. As a result, assets may be lost, misused, underutilized, or inadequately maintained.
-The absence of a centralized and automated asset management system affects management, staff, and other stakeholders who rely on accurate asset information for planning and decision-making. If this problem is not addressed, organizations may continue to experience financial losses, increased maintenance costs, reduced operational efficiency, and weak accountability mechanisms. The problem is particularly critical in environments where assets are frequently issued, transferred, or shared among users.
-It is therefore important to address this challenge by proposing a system that will enhance asset visibility, improve record accuracy, and support timely monitoring and control of assets.
-
-1.3 Objectives of the Study
-1.3.1 General Objective
-The main objective of this project is to design and develop an automated Asset Management System that will enhance efficient tracking, monitoring, and management of organizational assets.
-1.3.2 Specific Objectives
-The specific objectives of the project are:
-1. To analyze the existing asset management practices and identify system requirements.
-2. To design and develop a computerized asset management system for registering and tracking assets.
-3. To implement asset allocation, maintenance, and reporting functionalities within the system.
-4. To test and evaluate the system to ensure it meets user and organizational requirements.
-
-
-
-1.4 Research Questions
-The study will be guided by the following research questions:
-1. What are the weaknesses of the current asset management practices used in organizations?
-2. What functional and non-functional requirements are necessary for an effective asset management system?
-3. How can an automated system improve asset tracking, maintenance, and reporting?
-4. How effective is the developed system in supporting asset management operations?
-1.5 Project Scope
-The scope of this project will be limited to the design and development of a computerized Asset Management System. The system will focus on asset registration, categorization, allocation, transfer, maintenance tracking, and report generation. User roles such as administrator and asset users will be considered.
-The project will be implemented as a web-based system and will not cover advanced financial asset valuation, depreciation accounting, or integration with external enterprise systems. The study will be conducted within an organizational setting used as a case study.
-
-1.6 Significance of the Study
-The proposed project is expected to be significant in the following ways:
-1. It will improve efficiency in asset tracking and management by reducing reliance on manual records.
-2. It will enhance accountability and transparency in the use of organizational assets.
-3. It will minimize asset loss, duplication, and unauthorized usage through centralized control.
-4. It will support timely maintenance and better utilization of assets.
-5. It will provide management with accurate and timely reports for informed decision-making.
-6. It will serve as a reference for future researchers and students interested in asset management systems.
-7. It will contribute to improved service delivery within organizations through effective asset utilization.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-CHAPTER TWO
-LITERATURE REVIEW
-2.1 Introduction
-This chapter reviews existing literature related to asset management systems, focusing on concepts, existing practices, challenges, and technological solutions. The purpose of this chapter is to establish a theoretical and empirical foundation for the study by examining what other researchers and institutions have done in the area of asset management. It also identifies gaps in current systems that justify the need for a new web-based asset management system.
-Asset management plays a critical role in ensuring that organizational resources are effectively utilized, maintained, and protected. According to ISO 55000, asset management is defined as the coordinated activity of an organization to realize value from assets. Assets include both tangible items such as equipment, buildings, vehicles, and computers, as well as intangible resources such as software licenses and digital infrastructure.
-With the increasing complexity of modern organizations, managing assets manually has become ineffective. Researchers argue that poor asset management leads to financial losses, inefficiency, and weak accountability mechanisms (Allen, 2019). Therefore, organizations are increasingly adopting computerized systems to improve asset tracking and management.
-
-2.2 Traditional Asset Management Practices
-Traditionally, asset management has been conducted using manual methods such as paper registers, logbooks, and spreadsheets. In many institutions, asset records are kept by different departments, leading to fragmented data and lack of standardization. These traditional methods are simple to implement but suffer from major weaknesses.
-One of the main problems with manual systems is inaccuracy. Records can easily be lost, altered, or damaged. In addition, manual data entry increases the risk of human error, which affects the reliability of asset information. According to Brown and Kelly (2020), over 60% of organizations using manual systems experience inconsistencies in asset records.
-Another major limitation is poor visibility. Manual systems do not provide real-time tracking, making it difficult to know the exact location or condition of assets. This leads to asset misuse, duplication, and unnecessary purchases. Maintenance scheduling is also poorly managed, resulting in frequent equipment breakdowns and higher repair costs.
-Furthermore, traditional systems do not support automated reporting. Managers must manually compile data to generate reports, which is time-consuming and often inaccurate. This makes strategic planning and budgeting difficult.
-
-2.3 Challenges in Asset Management
-Several challenges affect effective asset management in organizations. These challenges include:
-2.3.1 Lack of Centralized Data
-Many organizations store asset information in multiple locations, such as different files, departments, or systems. This fragmentation makes it difficult to maintain accurate and up-to-date records. According to Davis and Green (2022), decentralized data storage increases the risk of data inconsistency and asset loss.
-2.3.2 Asset Loss and Theft
-Poor tracking systems make assets vulnerable to loss and theft. Without proper monitoring, assets may be misplaced or stolen without detection. This results in financial losses and weak accountability.
-2.3.3 Poor Maintenance Management
-Manual systems do not support automated maintenance reminders. As a result, maintenance activities are often delayed or ignored, leading to equipment failure and reduced asset lifespan.
-2.3.4 Lack of Accountability
-When asset ownership and usage are not clearly recorded, it becomes difficult to hold individuals responsible for asset misuse or damage. This creates a culture of negligence within organizations.
-
-
-2.3.5 Inadequate Reporting
-Manual systems cannot generate real-time reports. Managers lack reliable data for decision-making, auditing, and compliance purposes.
-
-2.4 Computerized Asset Management Systems
-Computerized Asset Management Systems (AMS) are designed to automate the process of tracking and managing organizational assets. These systems use databases and software applications to store asset information, track asset movement, schedule maintenance, and generate reports.
-According to Thompson (2021), computerized systems improve operational efficiency by reducing manual workload and minimizing human error. They also provide centralized access to asset data, making it easier for management to monitor asset usage and performance.
-Web-based systems, in particular, offer additional advantages such as remote access, multi-user support, and improved security. Users can access the system from any location with internet connectivity, which enhances flexibility and collaboration.
-
-2.5 Features of Modern Asset Management Systems
-Modern AMS platforms include several key features:
-2.5.1 Asset Registration and Categorization
-Allows organizations to record detailed information about each asset, including serial number, location, condition, and owner.
-2.5.2 Asset Allocation and Transfer
-Tracks which user or department is responsible for each asset and records asset movement.
-2.5.3 Maintenance Tracking
-Schedules maintenance activities and sends alerts when servicing is due.
-2.5.4 Reporting and Analytics
-Generates reports on asset status, usage, maintenance history, and inventory levels.
-2.5.5 Security and Access Control
-Uses authentication and authorization mechanisms to restrict system access.
-
-2.6 Benefits of Web-Based Asset Management Systems
-Web-based systems provide significant advantages over traditional approaches:
-• Improved data accuracy
-• Reduced operational costs
-• Enhanced transparency and accountability
-• Better resource utilization
-• Faster decision-making
-According to Patel (2020), organizations that implement automated AMS experience up to 40% improvement in asset utilization and 30% reduction in asset-related losses.
-
-2.7 Theoretical Framework
-This study is guided by the Systems Theory, which views an organization as a system composed of interrelated components. In asset management, assets, users, processes, and technology interact to achieve organizational goals.
-The proposed AMS acts as an integrated system that connects asset data, users, and management processes, ensuring smooth flow of information and effective control.
-
-2.8 Conceptual Framework
-The conceptual framework of this study consists of:
-• Independent Variables:
-Asset registration, tracking, maintenance, reporting
-• Dependent Variables:
-Efficiency, accountability, cost reduction
-• Intervening Variables:
-User training, system usability, internet availability
-
-2.9 Empirical Studies
-Several empirical studies support the effectiveness of automated asset management:
-• Allen (2019) found that organizations using digital AMS improved asset visibility by 50%.
-• Brown & Kelly (2020) reported reduced asset duplication after system automation.
-• Thompson (2021) observed improved maintenance scheduling in institutions using web-based systems.
-These studies confirm that automation significantly improves asset management outcomes.
-
-2.10 Research Gap
-Despite the availability of asset management systems, many existing solutions are either too expensive, complex, or not tailored to local organizational needs. Most systems are designed for large corporations and are not suitable for small or medium institutions.
-Furthermore, many studies focus on financial asset management rather than physical asset tracking. There is limited research on simple, affordable, web-based asset systems for educational and public institutions.
-This study therefore seeks to bridge this gap by developing a localized, user-friendly web-based asset management system.
-
-2.11 Conclusion
-This chapter reviewed literature on traditional and computerized asset management practices. It identified major challenges such as lack of centralized data, asset loss, poor maintenance, and weak accountability. The review established that web-based asset management systems offer effective solutions to these problems. However, gaps exist in the availability of affordable and context-specific systems, justifying the need for this study.
-CHAPTER 3
-METHODOLOGY
-3.1 INTRODUCTION
-Methodology refers to the systematic approach used in the research, design, development, and implementation of a system. It provides a structured way of solving problems and ensures that all project activities are carried out logically and efficiently. A well-defined methodology guides the researcher in selecting appropriate tools, techniques, and procedures required to achieve the project objectives.
-In this project, the methodology provides a clear framework for developing the Web-Based Asset Management System (AMS). It ensures that the system is designed based on real organizational needs, developed using suitable technologies, tested for reliability, and implemented effectively. The methodology also allows flexibility to accommodate changes and improvements during development, ensuring that the final system is efficient, reliable, and user-friendly.
-
-3.2 SYSTEM DEVELOPMENT METHODOLOGY
-This project will use the Rapid Application Development (RAD) methodology. RAD is an iterative and flexible approach that emphasizes quick development through continuous prototyping and user involvement. It allows developers to build functional components rapidly and refine them based on user feedback.
-RAD is suitable for the development of the Asset Management System because it supports fast delivery, flexibility, and continuous improvement. Through this approach, the system can be developed in phases and tested regularly to ensure that it meets organizational requirements.
-By involving system users such as administrators and staff throughout development, the risk of building an irrelevant or unusable system is minimized. The use of RAD ensures that the Asset Management System is delivered within a short time while maintaining high quality and usability.
-
-
-Fig 3.1: RAD Methodology Lifecycle
-
-Rapid Application Development Phases
-1. Requirements Planning
-During this initial stage of the RAD process, the stakeholder requirements are gathered. Emphasis will be set on core needs and goals; therefore, early identification of most critical features is identified. Requirements are gathered through rapid collection, and high-level decisions are made based on requirements to give a direction for development.
-
-2. User design
-During this phase of design, the development team comes up with prototypes or mockups of the system, bringing out the layout, design, and basic functionality of the system. The stakeholders review and give their feedback that helps in refining the system. This phase is iterative, with continuous user involvement to ensure the design meets user expectations and requirements.
-
-
-4.Rapid Prototyping and Testing
-Once the design of a user is agreed upon, rapid prototyping begins. Functional prototypes are rapidly developed, and the users test whether they meet their needs. The testing and modifications occur during the entire stage based on user input. Prototyping allows the discovery of issues and enhancements to be made during the early stages of development when changes are easier to implement.
-4.Cutover
-The final stage, cutover, is the completion of the system for deployment. This includes testing, bug fixing, and preparing the system for launch. Because much of the development has been iterative, the cutover phase usually concentrates on last-minute issues before deployment. The system is then delivered to the users, ensuring it is functional and meets all requirements identified throughout the development phases.
-
-Reasons for Choosing RAD Methodology
-RAD is one of the most successful software development programs available today, offering a host of advantages to both the software development teams as well as the users
-Following are some of the advantages:
-1. RAD accelerates the development by rapid prototyping and iterative cycles thus allowing for faster delivery in comparison to traditional methods
-2. Continuous user feedback ensures that the system meets the user's needs thus making the final product more user-friendly.
-3. Frequent stakeholder involvement makes it possible to incorporate changes and new requirements during the development.
-4. RAD is flexible and can quickly adapt to changing requirements, hence reducing the likelihood of misalignment.
-5. The iterative process ensures issues are identified and resolved early, improving system quality.
-6. RAD minimizes extensive planning, focusing on quick development and reducing costs.
-7. It allows for more cost-effective development by maintaining high quality within a shorter timeline.
-8. RAD reduces the risk of failure by finding problems early through constant testing and refinement.
-
-
-3.3 RESEARCH DESIGN
-The research design defines the overall plan and structure used to guide the collection, analysis, and interpretation of data in a study. It provides a logical framework that ensures the research objectives are achieved in a systematic and reliable manner. A well-defined research design helps the researcher determine the appropriate methods, tools, and procedures required to obtain relevant and accurate information.
-This study will adopt a qualitative research approach because the main aim is to understand the real challenges faced by organizations in managing their assets and to identify user requirements for the proposed Asset Management System. Qualitative research is suitable for this study since it focuses on exploring experiences, opinions, perceptions, and practices of users rather than numerical measurements.
-The qualitative approach will enable the researcher to gain an in-depth understanding of how assets are currently registered, tracked, allocated, and maintained within the organization. It will also help in identifying weaknesses in existing systems such as poor record keeping, lack of accountability, asset loss, delayed maintenance, and limited reporting capabilities.
-Primary data will be collected from asset managers, ICT personnel, inventory officers, and general staff who regularly interact with organizational assets. These respondents are selected because they possess firsthand knowledge of asset management processes and challenges. Their input will be used to define system requirements, user roles, functional features, and security needs.
-The research design will also allow the researcher to analyze patterns and common themes from the responses, such as frequently reported problems, desired system features, and expectations from automation. This information will directly influence the design of the Asset Management System by ensuring that the system addresses real organizational needs rather than theoretical assumptions.
-Overall, this research design ensures that the developed system is user-centered, practical, and aligned with real-world asset management operations, thereby increasing the likelihood of successful system adoption and effectiveness.
-
-3.4 SAMPLING TECHNIQUES
-Sampling refers to the process of selecting a subset of individuals from a larger population for the purpose of conducting a study. Since it is often impractical to collect data from every member of an organization, sampling is used to obtain representative and relevant information within a limited time and resource framework.
-This study will adopt a non-probability sampling technique, specifically purposive sampling. Purposive sampling involves deliberately selecting participants who have direct knowledge and experience related to the subject under investigation. This method is appropriate for this study because the research focuses on asset management processes that require specialized insight.
-The target population will include asset managers, administrators, inventory officers, ICT personnel, and selected staff members who frequently interact with organizational assets. These individuals are chosen because they are directly responsible for asset registration, allocation, maintenance, tracking, and reporting.
-By selecting participants who are actively involved in asset-related activities, the researcher ensures that the data collected is relevant, accurate, and meaningful. This approach eliminates irrelevant responses from individuals who lack sufficient knowledge of asset management operations.
-Purposive sampling also allows the researcher to capture diverse perspectives from different departments, ensuring that the developed Asset Management System addresses the needs of various users within the organization. This enhances the validity of the findings and ensures that the system is designed based on practical organizational realities rather than general assumptions.
-
-3.5 DATA COLLECTION METHODS
-Data collection methods refer to the procedures used to gather information from respondents for the purpose of answering research questions and achieving study objectives. In this study, data will be collected using questionnaires only. Questionnaires are structured research instruments designed to obtain information from respondents in a standardized manner.
-The questionnaires will be designed to capture both qualitative and quantitative data related to asset management within the organization. Specifically, the questionnaires will collect information on:
-• Current asset registration and tracking methods
-• Asset allocation and transfer procedures
-• Maintenance practices and challenges
-• Record keeping and reporting systems
-• Security and accountability mechanisms
-• User expectations and desired system features
-Both closed-ended and open-ended questions will be included. Closed-ended questions will provide quantitative data such as frequency of asset loss, number of assets tracked manually, and level of satisfaction with current systems. Open-ended questions will allow respondents to express their opinions, experiences, and suggestions regarding asset management challenges and system improvements.
-The questionnaires will be administered to asset managers, ICT staff, administrators, and general employees who interact with organizational assets. This ensures that data is collected from users at different operational levels, providing a comprehensive understanding of asset management processes.
-3.5.1 Reasons for Using Questionnaires
-1. Wide Coverage: Questionnaires allow data to be collected from a large number of respondents across different departments, ensuring diverse views on asset management practices.
-2. Standardization: All respondents answer the same set of questions, which improves consistency and reliability of the data.
-3. Cost-Effectiveness: Questionnaires require fewer financial resources compared to interviews or observations, making them suitable for student research projects.
-4. Time Efficiency: Data can be collected within a short period, allowing faster analysis and system development.
-5. Flexibility: Questionnaires support both structured (closed) and unstructured (open) questions, enabling the collection of numerical data and detailed qualitative insights.
-6. Reduced Bias: Respondents can answer questions independently, which reduces interviewer influence and increases honesty.
-7. Ease of Analysis: Responses can easily be organized, summarized, and analyzed to identify common asset management problems and system requirements.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3.6 RESOURCES TO BE USED
-Software Resources
-• Visual Studio Code – Editor
-• MySQL – Database
-• Windows OS – Operating System
-• Google Forms – Data collection
-Programming Languages
-• HTML, CSS, JavaScript – Frontend
-• Python – Backend
-The above programming languages are web-based and also easy and simple to use and offer efficient performance.
-
-Hardware Resources
-• Personal computer with:
-o 4GB RAM or higher
-o 500GB storage
-o 1.6GHz processor or above
-
-
-
-
-
-
-
-
-3.7 BUDGET
-A budget is a financial plan that outlines the estimated costs involved in a research project. It helps allocate resources efficiently to ensure the project is completed within its financial constraints.
-NODESCRIPTIONSPECIFICATIONQUANTITYUSAGEBUDGET1.LaptopCore i5, 8GB RAM, 64bit OS, 1TB HDD1Coding and documentation40,0002.Printing PaperA41 reamPrinting documentation and Questionnaires5003.Flash Disk32GB1Storing the project25004.Printing ServicesBoth colored and black and white2 copiesPrinting project proposal3,0005.Data ChargesMonthly bundles15GBDoing project research2500TOTAL48,500
-
-
-
-
-3.8 GANTT CHART
-A Gantt chart is a type of bar chart that represents a project schedule over time. It visually displays the start and end dates of various tasks, their durations, and their relationships or dependencies. It helps project managers plan, coordinate, and track specific tasks or activities in a project. Each task is listed along the vertical axis, and time intervals are represented along the horizontal axis. The chart visually shows which tasks overlap, which are dependent on others, and the overall progress of the project. Gantt charts are useful tools for managing timelines and ensuring that projects are completed on schedule.
-
-IDNAMEJanFebMarchAprilMay16202706132027031017240108152229051219261Planning2Feasibility study3Analysis4Design5Design6Testing7Documentation
-REFERENCES 
-1. Allen, J. (2019). The impact of digital platforms on asset management. Journal of Information Systems, 32(4), 156–172.
-2. Brown, D., & Kelly, A. (2020). Emerging trends in organizational asset management systems. Journal of Digital Management, 9(1), 44–59.
-3. Davis, P., & Green, R. (2022). The role of automation in asset tracking. International Review of Information Systems, 28(3), 88–102.
-4. Patel, R. (2020). Ethical issues in digital asset systems. Journal of Business Ethics, 45(6), 150–162.
-5. Thompson, L. (2021). Digital transformation in asset management. Journal of Digital Innovation, 12(1), 72–85.
-
-
-
