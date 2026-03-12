@@ -46,7 +46,42 @@ During a presentation, you can show this table to explain how the Frontend talks
 
 ---
 
-## 4. Backend Features (The Operations Center)
+## 4. Frontend Architecture (The User Interface Engine)
+
+The frontend is designed to be a **Single-Page Interface**, meaning it provides a smooth experience without constant page reloads.
+
+### A. State Management (The Browser's Memory)
+Instead of a complex database on the client-side, we use **`localStorage`**.
+- **Security:** Upon login, the server sends a JWT Token. We store this token, along with the user's `role`, `staffID`, and `username` in the browser's local memory.
+- **Persistence:** This allows the user to refresh the page without being logged out, as the script checks for the token every time the page loads.
+
+### B. Dynamic Rendering (Building on the Fly)
+We don't hardcode tables in HTML. Instead:
+1. **Fetch:** JavaScript sends a request to the backend.
+2. **Template Literals:** When data arrives, we use backticks (`` ` ``) in JavaScript to build HTML rows dynamically.
+3. **Injection:** We use `.innerHTML` to inject these rows into the dashboard. 
+*Benefit: This allows the "Asset Inventory" to update instantly when an admin adds or deletes an item.*
+
+### C. The Visibility Controller (`showSection`)
+To keep the dashboard clean, we implemented a centralized **Visibility Engine**:
+- **Logic:** A single function (`showSection`) handles all UI transitions.
+- **Workflow:** When you click "Manage Users," the function first adds a `.hidden` CSS class to **every** other form and report, then removes it only from the Users section.
+- **Cleanliness:** This prevents "UI Clutter" where multiple forms might overlap on the screen.
+
+### D. Responsive Layout (CSS Grid & Flexbox)
+The styling uses modern CSS techniques:
+- **Flexbox:** Used for the navigation buttons and stats cards so they align perfectly regardless of screen size.
+- **CSS Grid:** Used for the main dashboard layout to ensure the sidebar info and main tables scale correctly.
+- **Mobile First:** The `@media` queries ensure that on small screens (phones), tables become scrollable horizontally so the data remains readable.
+
+### E. The Printing Engine
+For the "Reports" feature, we use specialized **CSS Print Media Queries**:
+- **`@media print`**: This hidden logic tells the printer to ignore the "Logout" button, "Admin Actions," and "Search Bar," and only focus on the clean, white report data.
+- **Styling for Paper:** It automatically adjusts font sizes and removes shadows to ensure reports look professional when saved as PDF or printed on paper.
+
+---
+
+## 5. Backend Features (The Operations Center)
 
 ### A. The "Passport" System (Authentication)
 We use **JWT (JSON Web Tokens)**. 
