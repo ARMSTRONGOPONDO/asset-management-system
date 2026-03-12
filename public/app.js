@@ -1,658 +1,618 @@
-// -------------------
-// API URLs & Auth Helpers
-// -------------------
-const API_URL = "/api/assets";
-const AUTH_URL = "/api/auth";
-const MAINT_URL = "/api/maintenance";
-const REPORTS_URL = "/api/reports/summary";
-const AUDIT_URL = "/api/assets"; // base for per-asset audit endpoint
-const USERS_URL = "/api/users";
-const token = localStorage.getItem("token"); // Get JWT from localStorage
-const userRole = localStorage.getItem("role") || "user";
-const authHeaders = token
-  ? { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-  : { "Content-Type": "application/json" };
+document.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+  const username = localStorage.getItem('username');
+  const staffID = localStorage.getItem('staffID');
+  const department = localStorage.getItem('department');
 
-// Protect dashboard: if on dashboard page with no token, redirect to login
-const dashboardContainer = document.querySelector(".dashboard-container");
-if (dashboardContainer && !token) {
-  window.location.href = "login.html";
-}
-
-// Admin-only user management section
-const adminSection = document.getElementById("adminSection");
-
-async function loadUsersForAdmin() {
-  if (!adminSection || userRole !== 'admin') return;
-
-  adminSection.classList.remove('hidden');
-  const tbody = document.getElementById('userTableBody');
-  if (!tbody) return;
-
-  try {
-    const res = await fetch(USERS_URL, { headers: authHeaders });
-    if (!res.ok) {
-      tbody.innerHTML = '<tr><td colspan="4">Unable to load users.</td></tr>';
-      return;
-    }
-    const users = await res.json();
-    tbody.innerHTML = '';
-
-    users.forEach((user) => {
-      const isAdmin = user.role === 'admin';
-      const actionLabel = isAdmin ? 'Make User' : 'Make Admin';
-      const targetRole = isAdmin ? 'user' : 'admin';
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${user.username}</td>
-        <td>${user.email}</td>
-        <td>${user.role}</td>
-        <td><button class="action-btn" data-user-id="${user._id}" data-target-role="${targetRole}">${actionLabel}</button></td>
-      `;
-      tbody.appendChild(row);
-    });
-
-    // Attach click handlers
-    tbody.querySelectorAll('button[data-user-id]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const userId = btn.getAttribute('data-user-id');
-        const targetRole = btn.getAttribute('data-target-role');
-
-        if (!confirm(`Change this user's role to ${targetRole}?`)) return;
-
-        await fetch(`${USERS_URL}/${userId}/role`, {
-          method: 'PUT',
-          headers: authHeaders,
-          body: JSON.stringify({ role: targetRole })
-        });
-
-        loadUsersForAdmin();
-      });
-    });
-  } catch (err) {
-    console.error('Error loading users:', err);
+  if (!token && !window.location.pathname.includes('login.html') && !window.location.pathname.includes('register.html')) {
+    window.location.href = 'login.html';
+    return;
   }
-}
 
-// Toggle "Register Asset" form visibility
-const assetFormSection = document.getElementById("assetFormSection");
-const toggleAssetFormBtn = document.getElementById("toggleAssetFormBtn");
-if (assetFormSection && toggleAssetFormBtn) {
-  toggleAssetFormBtn.addEventListener("click", () => {
-    const isHidden = assetFormSection.classList.contains("hidden");
-    if (isHidden) {
-      assetFormSection.classList.remove("hidden");
-      toggleAssetFormBtn.textContent = "Hide Asset Form";
-    } else {
-      assetFormSection.classList.add("hidden");
-      toggleAssetFormBtn.textContent = "+ Register Asset";
+  // Helper for status badges
+  const getStatusBadge = (status) => {
+    const s = status.toLowerCase().replace(' ', '-');
+    return `<span class="badge badge-${s}">${status}</span>`;
+  };
+
+  // Helper for empty states
+  const checkEmpty = (data, tbody, colSpan) => {
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${colSpan}" class="empty-state">No records found.</td></tr>`;
+      return true;
+    }
+    return false;
+  };
+
+  // Display User Info
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  const roleDisplay = document.getElementById('roleDisplay');
+  const userInfoDisplay = document.getElementById('userInfoDisplay');
+
+  if (usernameDisplay) usernameDisplay.innerText = username;
+  if (roleDisplay) roleDisplay.innerText = `Role: ${role.toUpperCase()}`;
+  if (userInfoDisplay) userInfoDisplay.innerText = `Staff ID: ${staffID} | Dept: ${department}`;
+
+  // Role based view toggle
+  const adminView = document.getElementById('adminView');
+  const userView = document.getElementById('userView');
+
+  if (role === 'admin') {
+    if (adminView) adminView.classList.remove('hidden');
+  } else {
+    if (userView) userView.classList.remove('hidden');
+    // Pre-fill user specific fields
+    const fields = ['reqStaffID', 'reqDept', 'retStaffID', 'retDept', 'maintStaffID'];
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (id.includes('StaffID')) el.value = staffID;
+        if (id.includes('Dept')) el.value = department;
+      }
+    });
+  }
+
+  // Common: Logout
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    });
+  }
+
+  // Fetch Assets for Inventory
+  const fetchAssets = async () => {
+    try {
+      const res = await fetch('/api/assets', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const assets = await res.json();
+      const tbody = document.getElementById('assetsTableBody');
+      if (tbody) {
+        if (!checkEmpty(assets, tbody, 7)) {
+          tbody.innerHTML = assets.map(asset => `
+            <tr>
+              <td>${asset.itemID}</td>
+              <td>${asset.description}</td>
+              <td>${asset.serialNumber}</td>
+              <td>${asset.category}</td>
+              <td>${getStatusBadge(asset.status)}</td>
+              <td>${asset.assignedTo ? asset.assignedTo.username : 'N/A'}</td>
+              <td>${asset.department || 'N/A'}</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // Populate selects for allocation/disposal
+      const allocSelect = document.getElementById('allocAssetId');
+      const dispSelect = document.getElementById('dispAssetId');
+      if (allocSelect) {
+        allocSelect.innerHTML = '<option value="">Select Asset</option>' + 
+          assets.filter(a => a.status === 'Available').map(a => `<option value="${a._id}">${a.description} (${a.serialNumber})</option>`).join('');
+      }
+      if (dispSelect) {
+        dispSelect.innerHTML = '<option value="">Select Asset</option>' + 
+          assets.filter(a => a.status !== 'Disposed').map(a => `<option value="${a._id}">${a.description} (${a.serialNumber})</option>`).join('');
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (window.location.pathname.includes('dashboard.html')) {
+    fetchAssets();
+  }
+
+  // --- UI MANAGEMENT ---
+  const allSections = [
+    'registerSection', 'allocationSection', 'disposalSection', 
+    'usersSection', 'adminReportsSection', 'searchResults',
+    'requestSection', 'returnSection', 'maintenanceSection', 'userReportsSection'
+  ];
+
+  const showSection = (sectionId) => {
+    allSections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    const target = document.getElementById(sectionId);
+    if (target) target.classList.remove('hidden');
+  };
+
+  // --- ADMIN ACTIONS ---
+
+  const adminBtnMap = {
+    'btnShowRegister': 'registerSection',
+    'btnShowAllocate': 'allocationSection',
+    'btnShowDisposal': 'disposalSection',
+    'btnShowUsers': 'usersSection',
+    'btnShowAdminReports': 'adminReportsSection'
+  };
+
+  Object.entries(adminBtnMap).forEach(([btnId, sectionId]) => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener('click', () => {
+        showSection(sectionId);
+        if (sectionId === 'usersSection') fetchUserTable();
+        if (sectionId === 'adminReportsSection') fetchAdminReports();
+      });
     }
   });
-}
 
-// -------------------
-// Fetch and display assets
-// -------------------
-async function fetchAssets() {
-  const tbody = document.getElementById("assetsTableBody");
-  if (!tbody) return;
+  // Register Item
+  const registerItemForm = document.getElementById('registerItemForm');
+  if (registerItemForm) {
+    registerItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        itemID: document.getElementById('regItemID').value,
+        description: document.getElementById('regDescription').value,
+        serialNumber: document.getElementById('regSerialNumber').value,
+        category: document.getElementById('regCategory').value,
+        value: document.getElementById('regValue').value
+      };
 
-  try {
-    const res = await fetch(API_URL, { headers: authHeaders });
-    if (res.status === 401) {
-      // Token missing/invalid – send user to login
-      localStorage.removeItem("token");
-      localStorage.removeItem("username");
-      window.location.href = "login.html";
-      return;
+      const res = await fetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Item Registered');
+        registerItemForm.reset();
+        document.getElementById('registerSection').classList.add('hidden');
+        fetchAssets();
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    });
+  }
+
+  // Allocate Item
+  const allocationForm = document.getElementById('allocationForm');
+  if (allocationForm) {
+    // Fetch users for selection
+    const fetchUsers = async () => {
+      const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+      const users = await res.json();
+      const userSelect = document.getElementById('allocUserId');
+      if (userSelect) {
+        userSelect.innerHTML = '<option value="">Select Staff</option>' + 
+          users.map(u => `<option value="${u._id}" data-dept="${u.department}">${u.username} (${u.staffID})</option>`).join('');
+      }
+    };
+    fetchUsers();
+
+    allocationForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const assetID = document.getElementById('allocAssetId').value;
+      const userID = document.getElementById('allocUserId').value;
+      const userOption = document.getElementById('allocUserId').selectedOptions[0];
+      const department = userOption.getAttribute('data-dept');
+
+      const res = await fetch(`/api/assets/${assetID}/allocate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ userID, department })
+      });
+      if (res.ok) {
+        alert('Item Allocated');
+        allocationForm.reset();
+        document.getElementById('allocationSection').classList.add('hidden');
+        fetchAssets();
+      }
+    });
+  }
+
+  // Disposal
+  const disposalForm = document.getElementById('disposalForm');
+  if (disposalForm) {
+    disposalForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!confirm('Are you sure you want to mark this item as disposed? This action cannot be undone.')) return;
+      const assetID = document.getElementById('dispAssetId').value;
+      const reason = document.getElementById('dispReason').value;
+
+      const res = await fetch(`/api/assets/${assetID}/dispose`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ reason })
+      });
+      if (res.ok) {
+        alert('Item Disposed');
+        disposalForm.reset();
+        document.getElementById('disposalSection').classList.add('hidden');
+        fetchAssets();
+      }
+    });
+  }
+
+  // Manage Roles
+  const fetchUserTable = async () => {
+    const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+    const users = await res.json();
+    const tbody = document.getElementById('userTableBody');
+    if (tbody) {
+      if (!checkEmpty(users, tbody, 5)) {
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.username}</td>
+            <td>${u.staffID}</td>
+            <td>${u.department}</td>
+            <td>${getStatusBadge(u.role)}</td>
+            <td>
+              ${u.role === 'user' ? `<button onclick="updateRole('${u._id}', 'admin')">Make Admin</button>` : `<button onclick="updateRole('${u._id}', 'user')">Make User</button>`}
+            </td>
+          </tr>
+        `).join('');
+      }
     }
-    const assets = await res.json();
-    // Only show non-disposed assets in the main list
-    const activeAssets = assets.filter(asset => asset.status !== "Disposed");
-    tbody.innerHTML = "";
+  };
 
-    activeAssets.forEach(asset => {
-      const safeName = asset.name ? asset.name.replace(/"/g, '&quot;') : '';
-      const safeCategory = asset.category ? asset.category.replace(/"/g, '&quot;') : '';
-      const safeDepartment = asset.department ? asset.department.replace(/"/g, '&quot;') : '';
-      const safeLocation = asset.location ? asset.location.replace(/"/g, '&quot;') : '';
-      const safeAssignedTo = asset.assignedTo ? asset.assignedTo.replace(/"/g, '&quot;') : '';
+  window.updateRole = async (userId, role) => {
+    if (!confirm(`Are you sure you want to change this user's role to ${role}?`)) return;
+    const res = await fetch(`/api/users/${userId}/role`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ role })
+    });
+    if (res.ok) {
+      alert('Role Updated');
+      fetchUserTable();
+    }
+  };
 
-      const row = `
+  // Admin Reports
+  const fetchAdminReports = async () => {
+    const res = await fetch('/api/reports/admin', { headers: { 'Authorization': `Bearer ${token}` } });
+    const data = await res.json();
+    
+    document.querySelectorAll('.reportDate').forEach(el => el.innerText = new Date().toLocaleString());
+
+    document.getElementById('adminStats').innerHTML = `
+      <div class="stat-box"><strong>${data.stats.totalAssets}</strong><span>Total Assets</span></div>
+      <div class="stat-box"><strong>${data.stats.totalRequests}</strong><span>Requests</span></div>
+      <div class="stat-box"><strong>${data.stats.totalReturns}</strong><span>Returns</span></div>
+      <div class="stat-box"><strong>${data.stats.totalAllocated}</strong><span>Allocated</span></div>
+    `;
+
+    const inventoryBody = document.getElementById('fullInventoryTable').querySelector('tbody');
+    if (!checkEmpty(data.fullInventory, inventoryBody, 7)) {
+      inventoryBody.innerHTML = data.fullInventory.map(a => `
         <tr>
-          <td>${asset.name}</td>
-          <td>${asset.category}</td>
-          <td>${asset.status}</td>
-          <td>${asset.value}</td>
-          <td>${new Date(asset.dateAcquired).toLocaleDateString()}</td>
-          <td>${asset.location || "-"}</td>
-          <td>${asset.assignedTo || "-"}</td>
-          <td>${asset.department || "-"}</td>
+          <td>${a.itemID}</td>
+          <td>${a.description}</td>
+          <td>${a.serialNumber}</td>
+          <td>${getStatusBadge(a.status)}</td>
+          <td>${a.assignedTo ? a.assignedTo.username : 'N/A'}</td>
+          <td>${a.department || 'N/A'}</td>
+          <td>${a.value}</td>
+        </tr>
+      `).join('');
+    }
+
+    const requestsBody = document.getElementById('pendingRequestsTable').querySelector('tbody');
+    if (!checkEmpty(data.requestedItems, requestsBody, 5)) {
+      requestsBody.innerHTML = data.requestedItems.map(r => `
+        <tr>
+          <td>${r.description}</td>
+          <td>${r.reason}</td>
+          <td>${r.requestedBy.staffID}</td>
+          <td>${r.requestedBy.department}</td>
           <td>
-            <button class="action-btn edit-btn" onclick="editAsset('${asset._id}', '${safeName}', '${asset.status}', '${safeCategory}', '${safeDepartment}', '${safeLocation}', '${safeAssignedTo}', '${asset.value}')">Edit</button>
-            ${userRole === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteAsset('${asset._id}')">Delete</button>` : ''}
+            <button onclick="updateRequest('${r._id}', 'Approved')">Approve</button>
+            <button onclick="updateRequest('${r._id}', 'Rejected')">Reject</button>
           </td>
         </tr>
-      `;
-      tbody.innerHTML += row;
-    });
-  } catch (err) {
-    console.error("Error fetching assets:", err);
-  }
-}
-
-// -------------------
-// Add new asset
-// -------------------
-const assetForm = document.getElementById("assetForm");
-if (assetForm) {
-  assetForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const newAsset = {
-      name: document.getElementById("name").value,
-      category: document.getElementById("category").value,
-      status: document.getElementById("status").value,
-      value: document.getElementById("value").value || 0,
-      assignedTo: document.getElementById("assignedTo").value || "",
-      department: document.getElementById("department").value || "",
-      dateAcquired: document.getElementById("dateAcquired").value
-    };
-
-    await fetch(API_URL, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify(newAsset)
-    });
-
-    e.target.reset();
-    fetchAssets();
-    populateAssetOptions();
-  });
-}
-
-// -------------------
-// Delete asset
-// -------------------
-async function deleteAsset(id) {
-  if (!confirm("Are you sure you want to delete this asset?")) return;
-
-  await fetch(`${API_URL}/${id}`, { method: "DELETE", headers: authHeaders });
-  fetchAssets();
-  populateAssetOptions();
-}
-
-// -------------------
-// Edit asset (inline form)
-// -------------------
-const editAssetPanel = document.getElementById("editAssetPanel");
-const editAssetForm = document.getElementById("editAssetForm");
-const editAssetIdInput = document.getElementById("editAssetId");
-const editNameInput = document.getElementById("editName");
-const editCategoryInput = document.getElementById("editCategory");
-const editDepartmentInput = document.getElementById("editDepartment");
-const editLocationInput = document.getElementById("editLocation");
-const editAssignedToInput = document.getElementById("editAssignedTo");
-const editValueInput = document.getElementById("editValue");
-const editStatusSelect = document.getElementById("editStatus");
-const cancelEditBtn = document.getElementById("cancelEditBtn");
-
-function editAsset(id, currentName, currentStatus, currentCategory, currentDepartment, currentLocation, currentAssignedTo, currentValue) {
-  if (!editAssetPanel || !editAssetForm) return;
-  editAssetIdInput.value = id;
-  editNameInput.value = currentName || "";
-  if (editCategoryInput) editCategoryInput.value = currentCategory || "";
-  if (editDepartmentInput) editDepartmentInput.value = currentDepartment || "";
-  if (editLocationInput) editLocationInput.value = currentLocation || "";
-  if (editAssignedToInput) editAssignedToInput.value = currentAssignedTo || "";
-  if (editValueInput) editValueInput.value = currentValue != null ? currentValue : "";
-  if (editStatusSelect) {
-    editStatusSelect.value = currentStatus || "Available";
-  }
-  editAssetPanel.classList.remove("hidden");
-  window.scrollTo({ top: editAssetPanel.offsetTop - 20, behavior: "smooth" });
-}
-
-if (editAssetForm) {
-  editAssetForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = editAssetIdInput.value;
-    const newName = editNameInput.value;
-    const newCategory = editCategoryInput ? editCategoryInput.value : undefined;
-    const newDepartment = editDepartmentInput ? editDepartmentInput.value : undefined;
-    const newLocation = editLocationInput ? editLocationInput.value : undefined;
-    const newAssignedTo = editAssignedToInput ? editAssignedToInput.value : undefined;
-    const newValueRaw = editValueInput ? editValueInput.value : undefined;
-    const newValue = newValueRaw !== undefined && newValueRaw !== "" ? Number(newValueRaw) : undefined;
-    const newStatus = editStatusSelect ? editStatusSelect.value : undefined;
-
-    if (!id || !newName || !newStatus) return;
-
-    // Disallow setting status to Disposed here; use Dispose flow instead
-    if (newStatus === "Disposed") {
-      alert("To mark an asset as disposed, use the Dispose section under Transfers & Disposal.");
-      return;
+      `).join('');
     }
 
-    const payload = {
-      name: newName,
-      status: newStatus
-    };
-
-    if (newCategory !== undefined) payload.category = newCategory;
-    if (newDepartment !== undefined) payload.department = newDepartment;
-    if (newLocation !== undefined) payload.location = newLocation;
-    if (newAssignedTo !== undefined) payload.assignedTo = newAssignedTo;
-    if (newValue !== undefined && !Number.isNaN(newValue)) payload.value = newValue;
-
-    await fetch(`${API_URL}/${id}`, {
-      method: "PUT",
-      headers: authHeaders,
-      body: JSON.stringify(payload)
-    });
-
-    editAssetPanel.classList.add("hidden");
-    fetchAssets();
-    populateAssetOptions();
-  });
-}
-
-if (cancelEditBtn && editAssetPanel) {
-  cancelEditBtn.addEventListener("click", () => {
-    editAssetPanel.classList.add("hidden");
-  });
-}
-
-// -------------------
-// Populate asset options for disposal & transfer
-// -------------------
-async function populateAssetOptions() {
-  const res = await fetch(API_URL, { headers: authHeaders });
-  const assets = await res.json();
-
-  const disposeSelect = document.getElementById("disposeAssetId");
-  const transferSelect = document.getElementById("transferAssetId");
-  const maintenanceSelect = document.getElementById("maintenanceAssetId");
-  const historySelect = document.getElementById("historyAssetId");
-  if (!disposeSelect && !transferSelect && !maintenanceSelect && !historySelect) return;
-
-  if (disposeSelect) disposeSelect.innerHTML = "";
-  if (transferSelect) transferSelect.innerHTML = "";
-  if (maintenanceSelect) maintenanceSelect.innerHTML = "";
-  if (historySelect) historySelect.innerHTML = "";
-
-  assets.forEach(asset => {
-    // Only allow disposing and transferring non-disposed assets
-    const isDisposed = asset.status === "Disposed";
-
-    if (disposeSelect && !isDisposed) {
-      const option1 = document.createElement("option");
-      option1.value = asset._id;
-      option1.text = `${asset.name} (${asset.status})`;
-      disposeSelect.appendChild(option1);
-    }
-
-    if (transferSelect && !isDisposed) {
-      const option2 = document.createElement("option");
-      option2.value = asset._id;
-      option2.text = `${asset.name} (${asset.status})`;
-      transferSelect.appendChild(option2);
-    }
-
-    if (maintenanceSelect) {
-      const option3 = document.createElement("option");
-      option3.value = asset._id;
-      option3.text = `${asset.name} (${asset.status})`;
-      maintenanceSelect.appendChild(option3);
-    }
-
-    if (historySelect) {
-      const option4 = document.createElement("option");
-      option4.value = asset._id;
-      option4.text = `${asset.name} (${asset.status})`;
-      historySelect.appendChild(option4);
-    }
-  });
-
-  // If there is at least one asset, auto-load history for the first one
-  if (historySelect && historySelect.options.length > 0) {
-    const firstId = historySelect.options[0].value;
-    historySelect.value = firstId;
-    loadMaintenanceHistory(firstId);
-    loadAuditTrail(firstId);
-  }
-}
-
-// -------------------
-// Load audit trail for a single asset
-// -------------------
-async function loadAuditTrail(assetId) {
-  const tbody = document.getElementById("auditTableBody");
-  if (!tbody || !assetId) return;
-
-  try {
-    const res = await fetch(`${AUDIT_URL}/${assetId}/audit`, { headers: authHeaders });
-    if (!res.ok) {
-      tbody.innerHTML = "";
-      return;
-    }
-    const events = await res.json();
-    tbody.innerHTML = "";
-
-    if (!events.length) {
-      tbody.innerHTML = `<tr><td colspan="3">No history recorded for this asset yet.</td></tr>`;
-      return;
-    }
-
-    events.forEach((evt) => {
-      const dt = new Date(evt.date);
-      const dateStr = `${dt.toLocaleDateString()} ${dt.toLocaleTimeString()}`;
-      const row = `
+    const returnsBody = document.getElementById('pendingReturnsTable').querySelector('tbody');
+    if (!checkEmpty(data.returnMarkedItems, returnsBody, 5)) {
+      returnsBody.innerHTML = data.returnMarkedItems.map(r => `
         <tr>
-          <td>${dateStr}</td>
-          <td>${evt.type}</td>
-          <td>${evt.description || ''}</td>
+          <td>${r.asset ? r.asset.description : 'N/A'}</td>
+          <td>${r.serialNumber}</td>
+          <td>${r.reason}</td>
+          <td>${r.staffID}</td>
+          <td>
+            <button onclick="updateReturn('${r._id}', 'Received')">Mark Received</button>
+          </td>
         </tr>
+      `).join('');
+    }
+
+    const maintBody = document.getElementById('pendingMaintenanceTable').querySelector('tbody');
+    if (!checkEmpty(data.pendingMaintenance, maintBody, 5)) {
+      maintBody.innerHTML = data.pendingMaintenance.map(m => `
+        <tr>
+          <td>${m.asset ? m.asset.description : 'N/A'}</td>
+          <td>${m.serialNumber}</td>
+          <td>${m.reason}</td>
+          <td>${m.staffID}</td>
+          <td>
+            <button onclick="updateMaintenance('${m._id}', 'In Progress')">Start</button>
+            <button onclick="updateMaintenance('${m._id}', 'Completed')">Complete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  };
+
+  window.updateRequest = async (id, status) => {
+    if (!confirm(`Are you sure you want to ${status.toLowerCase()} this request?`)) return;
+    await fetch(`/api/requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    if (status === 'Approved') {
+      alert('Request Approved. You can now allocate an item to this user.');
+      document.getElementById('allocationSection').classList.remove('hidden');
+    }
+    fetchAdminReports();
+  };
+
+  window.updateReturn = async (id, status) => {
+    if (!confirm('Mark this item as received?')) return;
+    await fetch(`/api/returns/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    fetchAdminReports();
+    fetchAssets();
+  };
+
+  window.updateMaintenance = async (id, status) => {
+    if (!confirm(`Change maintenance status to ${status}?`)) return;
+    await fetch(`/api/maintenance/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    fetchAdminReports();
+    fetchAssets();
+  };
+
+  // Search
+  const searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', async () => {
+      const q = document.getElementById('searchInput').value;
+      if (!q) return;
+      const res = await fetch(`/api/assets/search?query=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      
+      showSection('searchResults');
+      
+      document.getElementById('resultsContent').innerHTML = `
+        <h4>Assets Found: ${data.assets.length}</h4>
+        <ul>${data.assets.map(a => `<li>${a.description} (${a.serialNumber}) - ${getStatusBadge(a.status)}</li>`).join('')}</ul>
+        <h4>Requests Found: ${data.requests.length}</h4>
+        <ul>${data.requests.map(r => `<li>${r.description} by ${r.staffID} - ${getStatusBadge(r.status)}</li>`).join('')}</ul>
+        <h4>Returns Found: ${data.returns.length}</h4>
+        <ul>${data.returns.map(r => `<li>${r.serialNumber} by ${r.staffID} - ${getStatusBadge(r.status)}</li>`).join('')}</ul>
+        <h4>Users Found: ${data.users.length}</h4>
+        <ul>${data.users.map(u => `<li>${u.username} (${u.staffID}) - ${getStatusBadge(u.role)}</li>`).join('')}</ul>
       `;
-      tbody.innerHTML += row;
     });
-  } catch (err) {
-    console.error("Error loading audit trail:", err);
-  }
-}
-
-// -------------------
-// Maintenance: log and fetch history
-// -------------------
-const maintenanceForm = document.getElementById("maintenanceForm");
-if (maintenanceForm) {
-  maintenanceForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const assetId = document.getElementById("maintenanceAssetId").value;
-    const description = document.getElementById("maintenanceDescription").value;
-    const date = document.getElementById("maintenanceDate").value;
-    const costValue = document.getElementById("maintenanceCost").value;
-
-    const payload = {
-      assetId,
-      description,
-      date: date || undefined,
-      cost: costValue ? Number(costValue) : undefined
-    };
-
-    await fetch(MAINT_URL, {
-      method: "POST",
-      headers: authHeaders,
-      body: JSON.stringify(payload)
-    });
-
-    maintenanceForm.reset();
-    loadMaintenanceHistory(assetId);
-  });
-}
-
-async function loadMaintenanceHistory(assetId) {
-  const tbody = document.getElementById("maintenanceTableBody");
-  if (!tbody) return;
-
-  const res = await fetch(`${MAINT_URL}?assetId=${assetId}`, { headers: authHeaders });
-  const records = await res.json();
-
-  tbody.innerHTML = "";
-  records.forEach((record) => {
-    const dateStr = new Date(record.date).toLocaleDateString();
-    const assetName = record.asset && record.asset.name ? record.asset.name : "-";
-    const row = `
-      <tr>
-        <td>${dateStr}</td>
-        <td>${assetName}</td>
-        <td>${record.description}</td>
-        <td>${record.status || '-'}</td>
-        <td>${record.cost || 0}</td>
-      </tr>
-    `;
-    tbody.innerHTML += row;
-  });
-}
-
-const maintenanceAssetSelect = document.getElementById("maintenanceAssetId");
-if (maintenanceAssetSelect) {
-  maintenanceAssetSelect.addEventListener("change", () => {
-    const id = maintenanceAssetSelect.value;
-    if (id) {
-      // When logging for an asset, also sync the history selector for convenience
-      const historySelect = document.getElementById("historyAssetId");
-      if (historySelect) {
-        historySelect.value = id;
-      }
-      loadMaintenanceHistory(id);
-      loadAuditTrail(id);
-    }
-  });
-}
-
-// Separate selector just for viewing history
-const historyAssetSelect = document.getElementById("historyAssetId");
-if (historyAssetSelect) {
-  historyAssetSelect.addEventListener("change", () => {
-    const id = historyAssetSelect.value;
-    if (id) {
-      loadMaintenanceHistory(id);
-      loadAuditTrail(id);
-    }
-  });
-}
-
-// -------------------
-// Handle asset disposal
-// -------------------
-const disposeForm = document.getElementById("disposeForm");
-if (disposeForm) {
-  // Hide disposal controls for non-admin users on the client side
-  if (userRole !== 'admin') {
-    const disposeAssetId = document.getElementById("disposeAssetId");
-  const disposeReason = document.getElementById("disposeReason");
-  const disposeSubmitBtn = document.getElementById("disposeSubmitBtn");
-    if (disposeAssetId) disposeAssetId.disabled = true;
-    if (disposeReason) disposeReason.disabled = true;
-    if (disposeSubmitBtn) disposeSubmitBtn.disabled = true;
-    const disposeHelper = document.querySelector('#disposeForm')?.previousElementSibling;
-    if (disposeHelper) {
-      disposeHelper.textContent = 'Only admins can dispose assets. Ask an admin to mark items as disposed when needed.';
-    }
   }
 
-  disposeForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("disposeAssetId").value;
-    const reason = document.getElementById("disposeReason").value;
+  // --- USER ACTIONS ---
 
-    if (!confirm(`Dispose asset? Reason: ${reason}`)) return;
+  const userBtnMap = {
+    'btnShowRequest': 'requestSection',
+    'btnShowReturn': 'returnSection',
+    'btnShowMaintenance': 'maintenanceSection',
+    'btnShowUserReports': 'userReportsSection'
+  };
 
-    await fetch(`${API_URL}/${id}/dispose`, {
-      method: "PUT",
-      headers: authHeaders,
-      body: JSON.stringify({ status: "Disposed", disposalReason: reason })
-    });
-
-    fetchAssets();
-    populateAssetOptions();
-    e.target.reset();
-  });
-}
-
-// -------------------
-// Handle asset transfer
-// -------------------
-const transferForm = document.getElementById("transferForm");
-if (transferForm) {
-  transferForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("transferAssetId").value;
-    const newLocation = document.getElementById("newLocation").value;
-
-    await fetch(`${API_URL}/${id}/transfer`, {
-      method: "PUT",
-      headers: authHeaders,
-      body: JSON.stringify({ location: newLocation })
-    });
-
-    fetchAssets();
-    populateAssetOptions();
-    e.target.reset();
-  });
-}
-
-// -------------------
-// Logout
-// -------------------
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("role");
-    window.location.href = "login.html";
-  });
-}
-
-// -------------------
-// Auth: Login & Register Forms
-// -------------------
-const loginForm = document.getElementById("loginForm");
-if (loginForm) {
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const messageEl = document.getElementById("message");
-
-    try {
-      const res = await fetch(`${AUTH_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+  Object.entries(userBtnMap).forEach(([btnId, sectionId]) => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.addEventListener('click', () => {
+        showSection(sectionId);
+        if (sectionId === 'userReportsSection') fetchUserReports();
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (messageEl) messageEl.textContent = data.error || "Login failed";
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      if (data.username) {
-        localStorage.setItem("username", data.username);
-      }
-      if (data.role) {
-        localStorage.setItem("role", data.role);
-      }
-
-      window.location.href = "dashboard.html";
-    } catch (err) {
-      console.error("Login error:", err);
-      if (messageEl) messageEl.textContent = "An error occurred. Please try again.";
     }
   });
-}
 
-const registerForm = document.getElementById("registerForm");
-if (registerForm) {
-  registerForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const username = document.getElementById("username").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const messageEl = document.getElementById("message");
-
-    try {
-      const res = await fetch(`${AUTH_URL}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password })
+  // Submit Request
+  const requestItemForm = document.getElementById('requestItemForm');
+  if (requestItemForm) {
+    requestItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        description: document.getElementById('reqDescription').value,
+        reason: document.getElementById('reqReason').value,
+        staffID: document.getElementById('reqStaffID').value,
+        department: document.getElementById('reqDept').value
+      };
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (messageEl) messageEl.textContent = data.error || "Registration failed";
-        return;
+      if (res.ok) {
+        alert('Request Submitted');
+        requestItemForm.reset();
+        document.getElementById('requestSection').classList.add('hidden');
       }
+    });
+  }
 
-      if (messageEl) messageEl.textContent = "Registration successful. You can now log in.";
-      // Optionally redirect to login after short delay
-      setTimeout(() => {
-        window.location.href = "login.html";
-      }, 1000);
-    } catch (err) {
-      console.error("Registration error:", err);
-      if (messageEl) messageEl.textContent = "An error occurred. Please try again.";
-    }
-  });
-}
+  // Submit Return
+  const returnItemForm = document.getElementById('returnItemForm');
+  if (returnItemForm) {
+    returnItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        serialNumber: document.getElementById('retSerialNumber').value,
+        reason: document.getElementById('retReason').value,
+        staffID: document.getElementById('retStaffID').value,
+        department: document.getElementById('retDept').value
+      };
+      const res = await fetch('/api/returns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Return Submitted');
+        returnItemForm.reset();
+        document.getElementById('returnSection').classList.add('hidden');
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    });
+  }
 
-// -------------------
-// Initialize asset data only on pages that need it
-// -------------------
-if (document.getElementById("assetsTableBody")) {
-  fetchAssets();
-  populateAssetOptions();
-  loadSummary();
-  loadUsersForAdmin();
-}
+  // Maintenance Request
+  const maintenanceReqForm = document.getElementById('maintenanceReqForm');
+  if (maintenanceReqForm) {
+    maintenanceReqForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        serialNumber: document.getElementById('maintSerialNumber').value,
+        reason: document.getElementById('maintReason').value,
+        staffID: document.getElementById('maintStaffID').value
+      };
+      const res = await fetch('/api/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        alert('Maintenance Request Submitted');
+        maintenanceReqForm.reset();
+        document.getElementById('maintenanceSection').classList.add('hidden');
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    });
+  }
 
-// -------------------
-// Load summary (reports)
-// -------------------
-async function loadSummary() {
-  const totalAssetsEl = document.getElementById("summaryTotalAssets");
-  const totalAcqEl = document.getElementById("summaryTotalAcquisitions");
-  const totalDispEl = document.getElementById("summaryTotalDisposals");
-  const totalMaintEl = document.getElementById("summaryTotalMaintenance");
-  const statusBody = document.getElementById("summaryStatusBody");
-  const categoryBody = document.getElementById("summaryCategoryBody");
-  const deptBody = document.getElementById("summaryDepartmentBody");
-
-  if (!totalAssetsEl || !totalAcqEl || !totalDispEl || !totalMaintEl) return;
-
-  try {
-    const res = await fetch(REPORTS_URL, { headers: authHeaders });
-    if (!res.ok) return;
+  // User Reports
+  const fetchUserReports = async () => {
+    const res = await fetch('/api/reports/user', { headers: { 'Authorization': `Bearer ${token}` } });
     const data = await res.json();
+    
+    document.querySelectorAll('.reportDate').forEach(el => el.innerText = new Date().toLocaleString());
+    const printUserInfo = document.getElementById('printUserInfo');
+    if (printUserInfo) printUserInfo.innerText = `Staff ID: ${staffID} | Name: ${username} | Department: ${department}`;
 
-    totalAssetsEl.textContent = data.totalAssets ?? 0;
-    totalAcqEl.textContent = data.totalAcquisitions ?? 0;
-    totalDispEl.textContent = data.totalDisposals ?? 0;
-    totalMaintEl.textContent = data.totalMaintenance ?? 0;
-
-    if (statusBody && data.byStatus) {
-      statusBody.innerHTML = "";
-      Object.entries(data.byStatus).forEach(([key, value]) => {
-        const row = `<tr><td>${key}</td><td>${value}</td></tr>`;
-        statusBody.innerHTML += row;
-      });
+    const allocBody = document.getElementById('userAllocatedTable').querySelector('tbody');
+    if (!checkEmpty(data.allocatedAssets, allocBody, 4)) {
+      allocBody.innerHTML = data.allocatedAssets.map(a => `
+        <tr>
+          <td>${a.description}</td>
+          <td>${a.serialNumber}</td>
+          <td>${a.category}</td>
+          <td>${a.value}</td>
+        </tr>
+      `).join('');
     }
 
-    if (categoryBody && data.byCategory) {
-      categoryBody.innerHTML = "";
-      Object.entries(data.byCategory).forEach(([key, value]) => {
-        const row = `<tr><td>${key}</td><td>${value}</td></tr>`;
-        categoryBody.innerHTML += row;
-      });
+    const reqBody = document.getElementById('userRequestsTable').querySelector('tbody');
+    if (!checkEmpty(data.requests, reqBody, 3)) {
+      reqBody.innerHTML = data.requests.map(r => `
+        <tr>
+          <td>${r.description}</td>
+          <td>${r.reason}</td>
+          <td>${getStatusBadge(r.status)}</td>
+        </tr>
+      `).join('');
     }
 
-    if (deptBody && data.byDepartment) {
-      deptBody.innerHTML = "";
-      Object.entries(data.byDepartment).forEach(([key, value]) => {
-        const row = `<tr><td>${key}</td><td>${value}</td></tr>`;
-        deptBody.innerHTML += row;
-      });
+    const retBody = document.getElementById('userReturnsTable').querySelector('tbody');
+    if (!checkEmpty(data.returns, retBody, 4)) {
+      retBody.innerHTML = data.returns.map(r => `
+        <tr>
+          <td>${r.asset ? r.asset.description : 'N/A'}</td>
+          <td>${r.serialNumber}</td>
+          <td>${r.reason}</td>
+          <td>${getStatusBadge(r.status)}</td>
+        </tr>
+      `).join('');
     }
-  } catch (err) {
-    console.error("Error loading summary:", err);
+  };
+
+  // Global Cancel buttons
+  document.querySelectorAll('.cancel-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.target.closest('section').classList.add('hidden');
+    });
+  });
+
+  // Auth Forms
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('role', data.role);
+          localStorage.setItem('username', data.username);
+          localStorage.setItem('staffID', data.staffID);
+          localStorage.setItem('department', data.department);
+          window.location.href = 'dashboard.html';
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        alert('Login failed');
+      }
+    });
   }
-}
+
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        staffID: document.getElementById('staffID').value,
+        department: document.getElementById('department').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          alert('Registration successful. Please login.');
+          window.location.href = 'login.html';
+        } else {
+          alert(result.error);
+        }
+      } catch (err) {
+        alert('Registration failed');
+      }
+    });
+  }
+
+});

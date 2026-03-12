@@ -10,7 +10,7 @@ const requireAdmin = auth.requireAdmin;
 // GET /api/users - list all users (admin only)
 router.get('/', verifyToken, requireAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, 'username email role createdAt').sort({ createdAt: -1 });
+    const users = await User.find({}, 'username email role staffID department createdAt').sort({ createdAt: -1 });
     res.json(users);
   } catch (err) {
     console.error(err);
@@ -30,7 +30,7 @@ router.put('/:id/role', verifyToken, requireAdmin, async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { role },
-      { new: true, fields: 'username email role createdAt' }
+      { new: true, fields: 'username email role staffID department createdAt' }
     );
 
     if (!updatedUser) {

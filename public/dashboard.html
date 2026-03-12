@@ -5,278 +5,272 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Asset Dashboard</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .hidden { display: none; }
+    .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fff; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; }
+    .printable { border: 1px solid #000; padding: 20px; }
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea *, #printAreaUser, #printAreaUser * { visibility: visible; }
+      #printArea, #printAreaUser { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
 </head>
 <body>
   <div class="container dashboard-container">
     <div class="dashboard-header">
       <div class="dashboard-header-main">
         <h1>Welcome, <span id="usernameDisplay"></span></h1>
-        <p class="dashboard-intro">Register assets, track where they are, log maintenance, and keep a simple record of disposals.</p>
         <p class="dashboard-role" id="roleDisplay"></p>
-        <p class="dashboard-role" id="roleHelper"></p>
+        <p id="userInfoDisplay"></p>
       </div>
       <button id="logoutBtn" class="logout-btn">Logout</button>
     </div>
 
-    <!-- Primary action: register a new asset -->
-    <button id="toggleAssetFormBtn" class="primary-btn">+ Register Asset</button>
+    <!-- ADMIN ONLY SECTION -->
+    <div id="adminView" class="hidden">
+      <section class="section card">
+        <div class="section-header">
+          <h2>Admin Actions</h2>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btnShowRegister" class="primary-btn">Register New Item</button>
+          <button id="btnShowAllocate" class="primary-btn">Item Allocation</button>
+          <button id="btnShowDisposal" class="primary-btn">Item Disposal</button>
+          <button id="btnShowUsers" class="primary-btn">Manage Roles</button>
+          <button id="btnShowAdminReports" class="primary-btn">View Admin Reports</button>
+        </div>
+      </section>
 
-    <section id="assetFormSection" class="section card hidden">
-      <h2>Register New Asset</h2>
-      <p class="section-helper">Create a clear record for each physical asset so you can track where it is, who is responsible, and what it is worth.</p>
-      <p class="section-helper">If you are unsure about some details, just use your best estimate. You can always update the asset later.</p>
-      <form id="assetForm">
-        <input type="text" id="name" placeholder="Asset Name (e.g., Dell Laptop)" required>
-        <input type="text" id="category" placeholder="Category (e.g., Laptop, Furniture)" required>
-        <input type="text" id="department" placeholder="Owning Department (e.g., IT, Finance, Shared)"
-        >
-        <select id="status" required>
-          <option value="Available">Available</option>
-          <option value="In Use">In Use</option>
-          <option value="Under Maintenance">Under Maintenance</option>
-          <option value="Disposed">Disposed</option>
-        </select>
-        <input type="number" id="value" placeholder="Asset Value (approximate, 0 if unknown)" required>
-        <input type="text" id="assignedTo" placeholder="Person responsible (optional)">
-        <input type="date" id="dateAcquired" placeholder="Date Acquired" required>
-        <button type="submit">Add Asset</button>
-      </form>
-    </section>
+      <!-- Search Section -->
+      <section class="section card">
+        <h2>Search</h2>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="searchInput" placeholder="Search items, requests, returns, staff...">
+          <button id="searchBtn">Search</button>
+        </div>
+        <div id="searchResults" class="hidden">
+          <h3>Search Results</h3>
+          <div id="resultsContent"></div>
+        </div>
+      </section>
 
-    <!-- Core workspace: list of assets -->
-    <section class="section">
-      <div class="section-header">
-        <h2>Assets</h2>
-        <p class="section-helper">Use the actions next to each asset to edit details, transfer location, log maintenance, or mark it as disposed.</p>
-      </div>
+      <!-- Register Item Form -->
+      <section id="registerSection" class="section card hidden">
+        <h2>Register New Item</h2>
+        <form id="registerItemForm">
+          <input type="text" id="regItemID" placeholder="Item ID" required>
+          <input type="text" id="regDescription" placeholder="Item Description" required>
+          <input type="text" id="regSerialNumber" placeholder="Item Serial Number" required>
+          <input type="text" id="regCategory" placeholder="Category" required>
+          <input type="number" id="regValue" placeholder="Value" required>
+          <button type="submit">Register Item</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Allocation Form -->
+      <section id="allocationSection" class="section card hidden">
+        <h2>Item Allocation</h2>
+        <form id="allocationForm">
+          <select id="allocAssetId" required>
+            <option value="">Select Asset</option>
+          </select>
+          <select id="allocUserId" required>
+            <option value="">Select Staff</option>
+          </select>
+          <button type="submit">Allocate Item</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Disposal Form -->
+      <section id="disposalSection" class="section card hidden">
+        <h2>Item Disposal</h2>
+        <form id="disposalForm">
+          <select id="dispAssetId" required>
+            <option value="">Select Asset</option>
+          </select>
+          <input type="text" id="dispReason" placeholder="Reason for Disposal" required>
+          <button type="submit">Dispose Item</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Manage Roles -->
+      <section id="usersSection" class="section card hidden">
+        <h2>Manage User Roles</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Staff ID</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody"></tbody>
+        </table>
+        <button type="button" class="cancel-btn">Close</button>
+      </section>
+
+      <!-- Admin Reports -->
+      <section id="adminReportsSection" class="section card hidden">
+        <div class="section-header">
+          <h2>Detailed Admin Report</h2>
+          <button onclick="window.print()">Print Detailed Report</button>
+        </div>
+        <div id="printArea">
+          <div class="report-header">
+            <h1>Detailed System Asset Report</h1>
+            <p>Generated on: <span class="reportDate"></span></p>
+          </div>
+          <hr>
+          <h3>System Summary</h3>
+          <div id="adminStats"></div>
+          
+          <h3>Complete Asset Inventory</h3>
+          <table id="fullInventoryTable">
+            <thead>
+              <tr>
+                <th>ItemID</th>
+                <th>Description</th>
+                <th>S/N</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Dept</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <h3>Pending Requests</h3>
+          <table id="pendingRequestsTable">
+            <thead><tr><th>Description</th><th>Reason</th><th>Staff ID</th><th>Dept</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <h3>Pending Returns</h3>
+          <table id="pendingReturnsTable">
+            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <h3>Pending Maintenance</h3>
+          <table id="pendingMaintenanceTable">
+            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button type="button" class="cancel-btn">Close</button>
+      </section>
+    </div>
+
+    <!-- USER ONLY SECTION -->
+    <div id="userView" class="hidden">
+      <section class="section card">
+        <h2>User Actions</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="btnShowRequest" class="primary-btn">Request an Item</button>
+          <button id="btnShowReturn" class="primary-btn">Return an Item</button>
+          <button id="btnShowMaintenance" class="primary-btn">Maintenance Request</button>
+          <button id="btnShowUserReports" class="primary-btn">My Reports</button>
+        </div>
+      </section>
+
+      <!-- Request Form -->
+      <section id="requestSection" class="section card hidden">
+        <h2>Request an Item</h2>
+        <form id="requestItemForm">
+          <input type="text" id="reqDescription" placeholder="Item Description" required>
+          <textarea id="reqReason" placeholder="Reason for Request" required></textarea>
+          <input type="text" id="reqStaffID" placeholder="Staff ID" readonly>
+          <input type="text" id="reqDept" placeholder="Department" readonly>
+          <button type="submit">Submit Request</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Return Form -->
+      <section id="returnSection" class="section card hidden">
+        <h2>Return an Item</h2>
+        <form id="returnItemForm">
+          <input type="text" id="retSerialNumber" placeholder="Item Serial Number" required>
+          <textarea id="retReason" placeholder="Reason for Returning" required></textarea>
+          <input type="text" id="retStaffID" placeholder="Staff ID" readonly>
+          <input type="text" id="retDept" placeholder="Department" readonly>
+          <button type="submit">Submit Return</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Maintenance Request Form -->
+      <section id="maintenanceSection" class="section card hidden">
+        <h2>Maintenance Request</h2>
+        <form id="maintenanceReqForm">
+          <input type="text" id="maintSerialNumber" placeholder="Item Serial Number" required>
+          <textarea id="maintReason" placeholder="Reason for Maintenance" required></textarea>
+          <input type="text" id="maintStaffID" placeholder="Staff ID" readonly>
+          <button type="submit">Submit Request</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- User Reports -->
+      <section id="userReportsSection" class="section card hidden">
+        <div class="section-header">
+          <h2>Detailed User Activity Report</h2>
+          <button onclick="window.print()">Print Activity Report</button>
+        </div>
+        <div id="printAreaUser">
+          <div class="report-header">
+            <h1>My Activity Report</h1>
+            <p>Generated on: <span class="reportDate"></span></p>
+            <p id="printUserInfo"></p>
+          </div>
+          <hr>
+          <h3>My Allocated Assets</h3>
+          <table id="userAllocatedTable">
+            <thead><tr><th>Description</th><th>S/N</th><th>Category</th><th>Value</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <h3>My Requests</h3>
+          <table id="userRequestsTable">
+            <thead><tr><th>Description</th><th>Reason</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <h3>My Returns</h3>
+          <table id="userReturnsTable">
+            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button type="button" class="cancel-btn">Close</button>
+      </section>
+    </div>
+
+    <!-- COMMON SECTION: ALL ASSETS -->
+    <section class="section card">
+      <h2>Asset Inventory</h2>
       <table>
         <thead>
           <tr>
-            <th>Name</th>
+            <th>ItemID</th>
+            <th>Description</th>
+            <th>S/N</th>
             <th>Category</th>
             <th>Status</th>
-            <th>Value</th>
-            <th>Date Acquired</th>
-            <th>Location</th>
             <th>Assigned To</th>
-            <th>Department</th>
-            <th>Actions</th>
+            <th>Dept</th>
           </tr>
         </thead>
-        <tbody id="assetsTableBody">
-          <!-- Assets will be loaded here dynamically -->
-        </tbody>
+        <tbody id="assetsTableBody"></tbody>
       </table>
     </section>
 
-    <section id="adminSection" class="section card hidden">
-      <h2>User Management (Admin only)</h2>
-      <p class="section-helper">Admins can promote or demote users here. Use this to give other people admin access without touching the database.</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="userTableBody">
-          <!-- Users will load here for admins -->
-        </tbody>
-      </table>
-    </section>
-
-    <!-- Inline edit panel for assets -->
-    <section id="editAssetPanel" class="section card hidden">
-      <h2>Edit Asset</h2>
-      <p class="section-helper">Update the core details for this asset. To mark an asset as disposed, still use the Dispose section under Transfers &amp; Disposal so the system records a proper disposal history.</p>
-      <form id="editAssetForm">
-        <input type="hidden" id="editAssetId">
-
-        <label for="editName" class="field-label">Asset Name</label>
-        <input type="text" id="editName" required>
-
-        <label for="editCategory" class="field-label">Category</label>
-        <input type="text" id="editCategory" placeholder="e.g. Laptop, Projector" required>
-
-        <label for="editDepartment" class="field-label">Department</label>
-        <input type="text" id="editDepartment" placeholder="e.g. IT, Finance, Library">
-
-        <label for="editLocation" class="field-label">Location</label>
-        <input type="text" id="editLocation" placeholder="e.g. Lab 2, Office 3B">
-
-        <label for="editAssignedTo" class="field-label">Person responsible</label>
-        <input type="text" id="editAssignedTo" placeholder="e.g. John Doe">
-
-        <label for="editValue" class="field-label">Estimated value</label>
-        <input type="number" id="editValue" min="0" step="0.01">
-
-        <label for="editStatus" class="field-label">Status</label>
-        <select id="editStatus" required>
-          <option value="Available">Available</option>
-          <option value="In Use">In Use</option>
-          <option value="Under Maintenance">Under Maintenance</option>
-        </select>
-
-        <button type="submit">Save Changes</button>
-        <button type="button" id="cancelEditBtn">Cancel</button>
-      </form>
-    </section>
-
-    <!-- Advanced actions grouped below the main table -->
-    <details class="section-details">
-      <summary>Transfers &amp; Disposal</summary>
-      <div class="section card">
-        <h2>Transfer Asset</h2>
-        <p class="section-helper">Use when an asset moves to a different physical location (for example, another office or department).</p>
-        <form id="transferForm">
-          <select id="transferAssetId" required></select>
-          <input type="text" id="newLocation" placeholder="New Location" required>
-          <button type="submit">Transfer</button>
-        </form>
-
-        <h2>Dispose Asset</h2>
-        <p class="section-helper">Mark an asset as disposed and record why. The record stays in the system for reporting. Only admins can dispose assets.</p>
-        <form id="disposeForm">
-          <select id="disposeAssetId" required></select>
-          <input type="text" id="disposeReason" placeholder="Reason for Disposal" required>
-          <button type="submit" id="disposeSubmitBtn">Mark as Disposed</button>
-        </form>
-      </div>
-    </details>
-
-    <details class="section-details">
-      <summary>Maintenance &amp; History</summary>
-      <div class="section card">
-        <h2>Log Maintenance / Repairs</h2>
-        <p class="section-helper">Use this form to record maintenance for a specific asset.</p>
-        <form id="maintenanceForm">
-          <label for="maintenanceAssetId" class="field-label">Select asset to log maintenance</label>
-          <select id="maintenanceAssetId" required></select>
-          <input type="text" id="maintenanceDescription" placeholder="Maintenance Description" required>
-          <input type="date" id="maintenanceDate" placeholder="Maintenance Date">
-          <input type="number" id="maintenanceCost" placeholder="Cost (optional)">
-          <button type="submit">Log Maintenance</button>
-        </form>
-
-        <div class="history-selector">
-          <label for="historyAssetId" class="field-label">View history for asset</label>
-          <select id="historyAssetId"></select>
-        </div>
-
-        <h2>Maintenance History</h2>
-        <p class="section-helper">Shows all maintenance logged for the selected asset.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Asset</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Cost</th>
-            </tr>
-          </thead>
-          <tbody id="maintenanceTableBody">
-            <!-- Maintenance records will load here -->
-          </tbody>
-        </table>
-        <h2>Asset Activity Trail</h2>
-        <p class="section-helper">Overview of acquisitions, disposals, and maintenance for the same selected asset.</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Action</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody id="auditTableBody">
-            <!-- Audit events will load here -->
-          </tbody>
-        </table>
-      </div>
-    </details>
-
-    <details class="section-details">
-      <summary>Summary &amp; Reports</summary>
-      <div id="summary" class="summary-container">
-        <h3>Summary</h3>
-        <p class="section-helper">High-level view of your asset records. Add assets and activity to see these numbers grow.</p>
-        <div class="summary-totals">
-          <p>Total Assets: <span id="summaryTotalAssets">0</span></p>
-          <p>Total Acquisitions: <span id="summaryTotalAcquisitions">0</span></p>
-          <p>Total Disposals: <span id="summaryTotalDisposals">0</span></p>
-          <p>Total Maintenance Records: <span id="summaryTotalMaintenance">0</span></p>
-        </div>
-
-        <div class="summary-grid">
-          <div class="summary-card">
-            <h4>By Status</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody id="summaryStatusBody"></tbody>
-            </table>
-          </div>
-
-          <div class="summary-card">
-            <h4>By Category</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody id="summaryCategoryBody"></tbody>
-            </table>
-          </div>
-
-          <div class="summary-card">
-            <h4>By Department</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>Department</th>
-                  <th>Count</th>
-                </tr>
-              </thead>
-              <tbody id="summaryDepartmentBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </details>
   </div>
 
   <script src="app.js"></script>
-  <script>
-    // Display username
-    const usernameDisplay = document.getElementById("usernameDisplay");
-    const username = localStorage.getItem("username");
-    const roleDisplay = document.getElementById("roleDisplay");
-    const roleHelper = document.getElementById("roleHelper");
-    const role = localStorage.getItem("role") || "user";
-    if (usernameDisplay && username) {
-      usernameDisplay.innerText = username;
-    }
-    if (roleDisplay) {
-      const isAdmin = role === 'admin';
-      roleDisplay.innerText = isAdmin
-        ? 'You are signed in as Admin'
-        : 'You are signed in as Standard User';
-
-      if (roleHelper) {
-        roleHelper.textContent = isAdmin
-          ? 'As an admin, you can register and edit assets, transfer them, log maintenance, dispose and delete assets, and manage other users\' roles.'
-          : 'As a standard user, you can register and edit assets, transfer them, and log maintenance, but you cannot delete or dispose assets or change user roles.';
-      }
-    }
-  </script>
 </body>
 </html>

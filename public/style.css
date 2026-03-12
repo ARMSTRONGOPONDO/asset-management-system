@@ -195,10 +195,32 @@ thead {
 th, td {
   padding: 12px 15px;
   text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+tbody tr:hover {
+  background: #f1f5f9 !important;
+  transition: background 0.2s;
 }
 
 tbody tr:nth-child(even) {
-  background: #f4f7fa;
+  background: #f8fafc;
+}
+
+button {
+  transition: transform 0.1s, background 0.2s;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.primary-btn, form button {
+  box-shadow: 0 2px 4px rgba(31, 60, 136, 0.2);
+}
+
+.primary-btn:hover, form button:hover {
+  box-shadow: 0 4px 6px rgba(31, 60, 136, 0.3);
 }
 
 /* ------------------- */
@@ -447,4 +469,64 @@ button.logout-btn:hover {
     overflow-x: auto;
     white-space: nowrap;
   }
+}
+
+/* ------------------- */
+/* Status Badges */
+/* ------------------- */
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.badge-available { background: #dcfce7; color: #166534; }
+.badge-allocated { background: #dbeafe; color: #1e40af; }
+.badge-maintenance { background: #fef9c3; color: #854d0e; }
+.badge-disposed { background: #fee2e2; color: #991b1b; }
+.badge-pending { background: #f3f4f6; color: #374151; }
+.badge-approved { background: #dcfce7; color: #166534; }
+.badge-rejected { background: #fee2e2; color: #991b1b; }
+.badge-received { background: #dcfce7; color: #166534; }
+
+/* ------------------- */
+/* Stats Cards Overlay for Admin Summary */
+/* ------------------- */
+#adminStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-box {
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  min-width: 150px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-box strong {
+  display: block;
+  font-size: 1.5rem;
+  color: #1f3c88;
+}
+
+.stat-box span {
+  font-size: 0.8rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-style: italic;
 }

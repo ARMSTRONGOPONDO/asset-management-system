@@ -9,18 +9,18 @@ const User = require("../models/User");
 // Registration
 // -------------------
 router.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, staffID, department } = req.body;
 
   // Validate input
-  if (!username || !email || !password) {
+  if (!username || !email || !password || !staffID || !department) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ $or: [{ email }, { staffID }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ error: "Email already exists" });
+      return res.status(400).json({ error: "User with this email, staff ID or username already exists" });
     }
 
     // Hash password
@@ -35,6 +35,8 @@ router.post("/register", async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      staffID,
+      department,
       role
     });
 
@@ -73,12 +75,24 @@ router.post("/login", async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user._id, username: user.username, role: user.role || 'user' },
+      { 
+        id: user._id, 
+        username: user.username, 
+        role: user.role || 'user',
+        staffID: user.staffID,
+        department: user.department
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    res.json({ token, username: user.username, role: user.role || 'user' });
+    res.json({ 
+      token, 
+      username: user.username, 
+      role: user.role || 'user',
+      staffID: user.staffID,
+      department: user.department
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

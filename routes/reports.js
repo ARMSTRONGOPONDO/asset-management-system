@@ -1,56 +1,63 @@
 const express = require('express');
-const Asset = require('../models/Asset');
-const Acquisition = require('../models/Acquisition');
-const Disposal = require('../models/Disposal');
-const Maintenance = require('../models/Maintenance');
-const verifyToken = require('../middleware/auth');
-
 const router = express.Router();
+const Asset = require('../models/Asset');
+const Request = require('../models/Request');
+const Return = require('../models/Return');
+const Maintenance = require('../models/Maintenance');
+const auth = require('../middleware/auth');
 
-// GET /api/reports/summary
-router.get('/summary', verifyToken, async (req, res) => {
+// Get admin dashboard statistics and lists
+router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
   try {
-    const totalAssets = await Asset.countDocuments();
-    const totalAcquisitions = await Acquisition.countDocuments();
-    const totalDisposals = await Disposal.countDocuments();
-    const totalMaintenance = await Maintenance.countDocuments();
-
-    const byStatusAgg = await Asset.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
+    const [
+      totalAssets,
+      totalRequests,
+      totalReturns,
+      totalAllocated,
+      requestedItems,
+      returnMarkedItems,
+      pendingMaintenance,
+      fullInventory
+    ] = await Promise.all([
+      Asset.countDocuments(),
+      Request.countDocuments(),
+      Return.countDocuments(),
+      Asset.countDocuments({ status: 'Allocated' }),
+      Request.find({ status: 'Pending' }).populate('requestedBy', 'username staffID department'),
+      Return.find({ status: 'Pending' }).populate('asset').populate('returnedBy', 'username staffID department'),
+      Maintenance.find({ status: 'Pending' }).populate('asset').populate('requestedBy', 'username staffID department'),
+      Asset.find().populate('assignedTo', 'username staffID department')
     ]);
-
-    const byCategoryAgg = await Asset.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } }
-    ]);
-
-    const byDepartmentAgg = await Asset.aggregate([
-      { $group: { _id: '$department', count: { $sum: 1 } } }
-    ]);
-
-    const byStatus = {};
-    byStatusAgg.forEach((item) => {
-      byStatus[item._id || 'Unknown'] = item.count;
-    });
-
-    const byCategory = {};
-    byCategoryAgg.forEach((item) => {
-      byCategory[item._id || 'Uncategorized'] = item.count;
-    });
-
-    const byDepartment = {};
-    byDepartmentAgg.forEach((item) => {
-      byDepartment[item._id || 'Unassigned'] = item.count;
-    });
 
     res.json({
-      totalAssets,
-      totalAcquisitions,
-      totalDisposals,
-      totalMaintenance,
-      byStatus,
-      byCategory,
-      byDepartment
+      stats: {
+        totalAssets,
+        totalRequests,
+        totalReturns,
+        totalAllocated
+      },
+      requestedItems,
+      returnMarkedItems,
+      pendingMaintenance,
+      fullInventory
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user specific reports
+router.get('/user', auth, async (req, res) => {
+  try {
+    const [requests, returns, allocatedAssets, maintenance] = await Promise.all([
+      Request.find({ requestedBy: req.user.id }),
+      Return.find({ returnedBy: req.user.id }).populate('asset'),
+      Asset.find({ assignedTo: req.user.id }),
+      Maintenance.find({ requestedBy: req.user.id }).populate('asset')
+    ]);
+
+    res.json({ requests, returns, allocatedAssets, maintenance });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
