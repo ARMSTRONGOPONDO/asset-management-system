@@ -66,7 +66,7 @@ router.patch('/:id', auth, auth.requireAdmin, async (req, res) => {
     // If completed, make asset available again? 
     // Usually maintenance means it's back in inventory.
     if (status === 'Completed') {
-      await Asset.findByIdAndUpdate(maintenance.asset, { status: 'Available' });
+      await Asset.findByIdAndUpdate(maintenance.asset, { status: 'Allocated' });
     } else if (status === 'In Progress') {
       await Asset.findByIdAndUpdate(maintenance.asset, { status: 'Maintenance' });
     }
