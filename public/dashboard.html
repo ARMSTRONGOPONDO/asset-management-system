@@ -6,9 +6,7 @@
   <title>Asset Dashboard</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .hidden { display: none; }
-    .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fff; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; }
+    .hidden { display: none !important; }
     .printable { border: 1px solid #000; padding: 20px; }
     @media print {
       body * { visibility: hidden; }
@@ -216,7 +214,7 @@
           </table>
           <h3>Pending Maintenance</h3>
           <table id="pendingMaintenanceTable">
-            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Action</th></tr></thead>
+            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Status</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
 
@@ -315,6 +313,11 @@
           </table>
           <h3>My Returns</h3>
           <table id="userReturnsTable">
+            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <h3>My Maintenance Requests</h3>
+          <table id="userMaintenanceTable">
             <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Status</th></tr></thead>
             <tbody></tbody>
           </table>

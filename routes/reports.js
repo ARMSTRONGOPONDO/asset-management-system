@@ -15,6 +15,7 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       totalRequests,
       totalReturns,
       totalAllocated,
+      totalDisposed,
       requestedItems,
       returnMarkedItems,
       pendingMaintenance,
@@ -25,9 +26,10 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       Request.countDocuments(),
       Return.countDocuments(),
       Asset.countDocuments({ status: 'Allocated' }),
+      Asset.countDocuments({ status: 'Disposed' }),
       Request.find({ status: 'Pending' }).populate('requestedBy', 'username staffID department'),
       Return.find({ status: 'Pending' }).populate('asset').populate('returnedBy', 'username staffID department'),
-      Maintenance.find({ status: 'Pending' }).populate('asset').populate('requestedBy', 'username staffID department'),
+      Maintenance.find({ status: { $ne: 'Completed' } }).populate('asset').populate('requestedBy', 'username staffID department'),
       Asset.find().populate('assignedTo', 'username staffID department'),
       AuditLog.find().sort({ createdAt: -1 })
     ]);
@@ -37,7 +39,8 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
         totalAssets,
         totalRequests,
         totalReturns,
-        totalAllocated
+        totalAllocated,
+        totalDisposed
       },
       requestedItems,
       returnMarkedItems,

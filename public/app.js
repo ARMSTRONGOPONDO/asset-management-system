@@ -68,7 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/assets', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const assets = await res.json();
+      let assets = await res.json();
+      
+      // If user is not admin, only show available assets in the general inventory
+      if (role !== 'admin') {
+        assets = assets.filter(a => a.status === 'Available');
+      }
+
       const tbody = document.getElementById('assetsTableBody');
       if (tbody) {
         if (!checkEmpty(assets, tbody, 7)) {
@@ -403,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="stat-box"><strong>${data.stats.totalRequests}</strong><span>Requests</span></div>
       <div class="stat-box"><strong>${data.stats.totalReturns}</strong><span>Returns</span></div>
       <div class="stat-box"><strong>${data.stats.totalAllocated}</strong><span>Allocated</span></div>
+      <div class="stat-box"><strong>${data.stats.totalDisposed}</strong><span>Disposed</span></div>
     `;
 
     const inventoryBody = document.getElementById('fullInventoryTable').querySelector('tbody');
@@ -452,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const maintBody = document.getElementById('pendingMaintenanceTable').querySelector('tbody');
-    if (!checkEmpty(data.pendingMaintenance, maintBody, 5)) {
+    if (!checkEmpty(data.pendingMaintenance, maintBody, 6)) {
       maintBody.innerHTML = data.pendingMaintenance.map(m => `
         <tr>
           <td>${m.asset ? m.asset.description : 'N/A'}</td>
@@ -460,7 +467,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${m.reason}</td>
           <td>${m.staffID}</td>
           <td>
-            <button onclick="updateMaintenance('${m._id}', 'In Progress')">Start</button>
+            ${m.status}
+          </td>
+          <td>
+            ${m.status === 'Pending' ? `<button onclick="updateMaintenance('${m._id}', 'In Progress')">Start</button>` : ''}
             <button onclick="updateMaintenance('${m._id}', 'Completed')">Complete</button>
           </td>
         </tr>
@@ -490,7 +500,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (status === 'Approved') {
       alert('Request Approved. You can now allocate an item to this user.');
-      document.getElementById('allocationSection').classList.remove('hidden');
+      // Fetch users to populate dropdown before showing allocation
+      const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+      const users = await res.json();
+      const userSelect = document.getElementById('allocUserId');
+      if (userSelect) {
+        userSelect.innerHTML = '<option value="">Select Staff</option>' + 
+          users.map(u => `<option value="${u._id}" data-dept="${u.department}">${u.username} (${u.staffID})</option>`).join('');
+      }
+      
+      // Fetch available assets
+      const resAssets = await fetch('/api/assets', { headers: { 'Authorization': `Bearer ${token}` } });
+      const assets = await resAssets.json();
+      const assetSelect = document.getElementById('allocAssetId');
+      if (assetSelect) {
+        assetSelect.innerHTML = '<option value="">Select Asset</option>' + 
+          assets.filter(a => a.status === 'Available').map(a => `<option value="${a._id}">${a.description} (${a.serialNumber})</option>`).join('');
+      }
+
+      showSection('allocationSection');
     }
     fetchAdminReports();
   };
@@ -677,6 +705,18 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${r.serialNumber}</td>
           <td>${r.reason}</td>
           <td>${getStatusBadge(r.status)}</td>
+        </tr>
+      `).join('');
+    }
+
+    const maintBodyUser = document.getElementById('userMaintenanceTable').querySelector('tbody');
+    if (!checkEmpty(data.maintenance, maintBodyUser, 4)) {
+      maintBodyUser.innerHTML = data.maintenance.map(m => `
+        <tr>
+          <td>${m.asset ? m.asset.description : 'N/A'}</td>
+          <td>${m.serialNumber}</td>
+          <td>${m.reason}</td>
+          <td>${getStatusBadge(m.status)}</td>
         </tr>
       `).join('');
     }

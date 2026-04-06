@@ -93,6 +93,10 @@ router.post("/:id/allocate", auth, auth.requireAdmin, async (req, res) => {
     const asset = await Asset.findById(req.params.id);
     if (!asset) return res.status(404).json({ error: "Asset not found" });
 
+    if (asset.status === 'Allocated') {
+      return res.status(400).json({ error: "Asset is already allocated" });
+    }
+
     asset.status = "Allocated";
     asset.assignedTo = userID;
     asset.department = department;
