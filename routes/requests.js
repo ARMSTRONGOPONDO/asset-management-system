@@ -6,7 +6,7 @@ const auth = require('../middleware/auth');
 // Create a new request
 router.post('/', auth, async (req, res) => {
   try {
-    const { description, reason, staffID, department } = req.body;
+    const { description, reason, staffID, department, specifications, duration, timeline } = req.body;
     
     if (!description || !reason || !staffID || !department) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -17,6 +17,9 @@ router.post('/', auth, async (req, res) => {
       reason,
       staffID,
       department,
+      specifications,
+      duration,
+      timeline,
       requestedBy: req.user.id
     });
 

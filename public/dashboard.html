@@ -32,13 +32,39 @@
         <div class="section-header">
           <h2>Admin Actions</h2>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button id="btnShowRegister" class="primary-btn">Register New Item</button>
-          <button id="btnShowAllocate" class="primary-btn">Item Allocation</button>
-          <button id="btnShowDisposal" class="primary-btn">Item Disposal</button>
-          <button id="btnShowUsers" class="primary-btn">Manage Roles</button>
-          <button id="btnShowAdminReports" class="primary-btn">View Admin Reports</button>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button id="btnShowRegister" class="primary-btn">➕ Register Item</button>
+          <button id="btnShowAllocate" class="primary-btn">👤 Allocate Item</button>
+          <button id="btnShowTransfer" class="primary-btn">🔄 Smart Transfer</button>
+          <button id="btnShowDisposal" class="primary-btn">🗑️ Asset Disposal</button>
+          <button id="btnShowTracking" class="primary-btn">📍 Live Tracking</button>
+          <button id="btnShowUsers" class="primary-btn">👥 Manage Users</button>
+          <button id="btnShowAdminReports" class="primary-btn">📈 System Reports</button>
         </div>
+      </section>
+
+      <!-- Asset Tracking Section -->
+      <section id="trackingSection" class="section card hidden">
+        <h2>Asset Tracking</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <input type="text" id="trackAssetID" placeholder="Enter Asset ID or S/N">
+          <button id="trackBtn">Track Asset</button>
+        </div>
+        <div id="trackingDetails" class="hidden">
+          <div id="trackSummary"></div>
+          <hr>
+          <h3>Transfer History</h3>
+          <table id="trackTransferTable">
+            <thead><tr><th>Date</th><th>From</th><th>To</th><th>Dept</th><th>Reason</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <h3>Maintenance History</h3>
+          <table id="trackMaintenanceTable">
+            <thead><tr><th>Date</th><th>Issue</th><th>Cost</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button type="button" class="cancel-btn">Close</button>
       </section>
 
       <!-- Search Section -->
@@ -84,6 +110,40 @@
             <option value="">Select Staff</option>
           </select>
           <button type="submit">Allocate Item</button>
+          <button type="button" class="cancel-btn">Cancel</button>
+        </form>
+      </section>
+
+      <!-- Transfer Form -->
+      <section id="transferSection" class="section card hidden">
+        <h2>🔄 Smart Asset Transfer</h2>
+        <p class="section-helper">Transfer assets between users and departments while keeping a full history.</p>
+        <form id="transferForm">
+          <div class="form-group">
+            <label>Asset to Transfer:</label>
+            <select id="transAssetId" required>
+              <option value="">Select Asset...</option>
+            </select>
+          </div>
+          <div class="form-group" style="background: #f1f5f9; padding: 10px; border-radius: 8px;">
+            <label>Current Status:</label>
+            <p id="transCurrentHolder" style="margin:0; font-weight: 700;">Select an asset to see holder info</p>
+          </div>
+          <div class="form-group">
+            <label>New Owner:</label>
+            <select id="transToUserId" required>
+              <option value="">Select New Owner...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Department:</label>
+            <input type="text" id="transToDept" placeholder="e.g. IT Department">
+          </div>
+          <div class="form-group">
+            <label>Transfer Reason:</label>
+            <textarea id="transReason" placeholder="Why is this being transferred?" required></textarea>
+          </div>
+          <button type="submit" class="primary-btn" style="width: auto;">Complete Transfer</button>
           <button type="button" class="cancel-btn">Cancel</button>
         </form>
       </section>
@@ -204,7 +264,7 @@
 
           <h3>Pending Requests</h3>
           <table id="pendingRequestsTable">
-            <thead><tr><th>Description</th><th>Reason</th><th>Staff ID</th><th>Dept</th><th>Action</th></tr></thead>
+            <thead><tr><th>Description</th><th>Specifications</th><th>Reason</th><th>Duration</th><th>Timeline</th><th>Staff</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
           <h3>Pending Returns</h3>
@@ -212,9 +272,9 @@
             <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
-          <h3>Pending Maintenance</h3>
+          <h3>Pending/Ongoing Maintenance</h3>
           <table id="pendingMaintenanceTable">
-            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff ID</th><th>Status</th><th>Action</th></tr></thead>
+            <thead><tr><th>Asset</th><th>S/N</th><th>Reason</th><th>Staff</th><th>Status</th><th>Cost</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
 
@@ -252,13 +312,34 @@
 
       <!-- Request Form -->
       <section id="requestSection" class="section card hidden">
-        <h2>Request an Item</h2>
+        <h2>📝 Asset Request Form</h2>
         <form id="requestItemForm">
-          <input type="text" id="reqDescription" placeholder="Item Description" required>
-          <textarea id="reqReason" placeholder="Reason for Request" required></textarea>
-          <input type="text" id="reqStaffID" placeholder="Staff ID" readonly>
-          <input type="text" id="reqDept" placeholder="Department" readonly>
-          <button type="submit">Submit Request</button>
+          <div class="form-group">
+            <label>Item Description:</label>
+            <input type="text" id="reqDescription" placeholder="e.g. Graphic Tablet" required>
+          </div>
+          <div class="form-group">
+            <label>Detailed Specifications:</label>
+            <textarea id="reqSpecifications" placeholder="e.g. Wacom Intuos Pro, Medium size"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Duration of Use:</label>
+            <select id="reqDuration" required>
+              <option value="Permanent">Permanent Allocation</option>
+              <option value="Temporary">Temporary Use</option>
+            </select>
+          </div>
+          <div id="timelineDiv" class="form-group hidden">
+            <label>Required Until (Expected Return):</label>
+            <input type="date" id="reqTimeline">
+          </div>
+          <div class="form-group">
+            <label>Justification:</label>
+            <textarea id="reqReason" placeholder="Why do you need this item?" required></textarea>
+          </div>
+          <input type="hidden" id="reqStaffID">
+          <input type="hidden" id="reqDept">
+          <button type="submit" class="primary-btn" style="width: auto;">🚀 Submit Request</button>
           <button type="button" class="cancel-btn">Cancel</button>
         </form>
       </section>

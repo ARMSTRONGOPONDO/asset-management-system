@@ -5,6 +5,8 @@ const Request = require("../models/Request");
 const Return = require("../models/Return");
 const User = require("../models/User");
 const AuditLog = require("../models/AuditLog");
+const Transfer = require("../models/Transfer");
+const Maintenance = require("../models/Maintenance");
 const auth = require("../middleware/auth");
 
 // Get all assets
@@ -122,6 +124,82 @@ router.post("/:id/dispose", auth, auth.requireAdmin, async (req, res) => {
 
     res.json(asset);
   } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Transfer asset (Admin only)
+router.post("/:id/transfer", auth, auth.requireAdmin, async (req, res) => {
+  try {
+    const { toUserID, toDepartment, reason } = req.body;
+    const asset = await Asset.findById(req.params.id).populate('assignedTo');
+    if (!asset) return res.status(404).json({ error: "Asset not found" });
+
+    if (asset.status === 'Disposed') {
+      return res.status(400).json({ error: "Cannot transfer a disposed asset" });
+    }
+
+    const newOwner = await User.findById(toUserID);
+    if (!newOwner) return res.status(404).json({ error: "New owner not found" });
+
+    const fromUserText = asset.assignedTo ? `${asset.assignedTo.username} (${asset.assignedTo.staffID})` : 'N/A';
+
+    const transfer = new Transfer({
+      asset: asset._id,
+      itemID: asset.itemID,
+      serialNumber: asset.serialNumber,
+      reason,
+      fromDepartment: asset.department,
+      toDepartment: toDepartment || newOwner.department,
+      fromUser: asset.assignedTo ? asset.assignedTo._id : null,
+      fromUserName: asset.assignedTo ? asset.assignedTo.username : 'N/A',
+      toUser: newOwner._id,
+      toUserName: newOwner.username,
+      performedBy: req.user.id
+    });
+
+    await transfer.save();
+
+    // Log to master AuditLog
+    const newAuditLog = new AuditLog({
+      action: 'Transfer Asset',
+      targetId: asset._id,
+      targetName: asset.description,
+      details: `Transferred from ${fromUserText} to ${newOwner.username} (${newOwner.staffID}). Reason: ${reason}`,
+      performedBy: req.user.id,
+      performedByName: req.user.username
+    });
+    await newAuditLog.save();
+
+    // Update asset
+    asset.assignedTo = newOwner._id;
+    asset.department = toDepartment || newOwner.department;
+    asset.status = "Allocated";
+    await asset.save();
+
+    res.json({ message: "Asset transferred successfully", transfer });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Track asset (Admin only)
+router.get("/:id/track", auth, auth.requireAdmin, async (req, res) => {
+  try {
+    const asset = await Asset.findById(req.params.id).populate('assignedTo', 'username staffID department');
+    if (!asset) return res.status(404).json({ error: "Asset not found" });
+
+    const maintenanceHistory = await Maintenance.find({ asset: asset._id }).populate('requestedBy', 'username');
+    const transferHistory = await Transfer.find({ asset: asset._id }).sort({ date: -1 });
+
+    res.json({
+      asset,
+      maintenanceHistory,
+      transferHistory
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });

@@ -63,6 +63,17 @@ router.patch('/:id', auth, auth.requireAdmin, async (req, res) => {
     if (cost !== undefined) maintenance.cost = cost;
     await maintenance.save();
 
+    // Log to AuditTrail
+    const newLog = new AuditLog({
+      action: 'Maintenance Update',
+      targetId: maintenance._id,
+      targetName: `Asset: ${maintenance.serialNumber}`,
+      details: `Status set to ${status}. Cost: ${cost || maintenance.cost}`,
+      performedBy: req.user.id,
+      performedByName: req.user.username
+    });
+    await newLog.save();
+
     // If completed, make asset available again? 
     // Usually maintenance means it's back in inventory.
     if (status === 'Completed') {

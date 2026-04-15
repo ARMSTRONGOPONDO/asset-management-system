@@ -98,9 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Populate selects for allocation/disposal
+      // Populate selects for allocation/disposal/transfer
       const allocSelect = document.getElementById('allocAssetId');
       const dispSelect = document.getElementById('dispAssetId');
+      const transSelect = document.getElementById('transAssetId');
       if (allocSelect) {
         allocSelect.innerHTML = '<option value="">Select Asset</option>' + 
           assets.filter(a => a.status === 'Available').map(a => `<option value="${a._id}">${a.description} (${a.serialNumber})</option>`).join('');
@@ -109,11 +110,77 @@ document.addEventListener('DOMContentLoaded', () => {
         dispSelect.innerHTML = '<option value="">Select Asset</option>' + 
           assets.filter(a => a.status !== 'Disposed').map(a => `<option value="${a._id}">${a.description} (${a.serialNumber})</option>`).join('');
       }
+      if (transSelect) {
+        transSelect.innerHTML = '<option value="">Select Asset to Transfer</option>' + 
+          assets.filter(a => a.status === 'Allocated').map(a => `<option value="${a._id}">${a.description} (${a.serialNumber})</option>`).join('');
+      }
 
     } catch (err) {
       console.error(err);
     }
   };
+
+  // Asset Tracking Logic
+  const trackBtn = document.getElementById('trackBtn');
+  if (trackBtn) {
+    trackBtn.addEventListener('click', async () => {
+      const query = document.getElementById('trackAssetID').value;
+      if (!query) return;
+
+      const sRes = await fetch(`/api/assets/search?query=${query}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const sData = await sRes.json();
+      if (sData.assets.length === 0) {
+        alert('Asset not found');
+        return;
+      }
+      const assetId = sData.assets[0]._id;
+
+      const res = await fetch(`/api/assets/${assetId}/track`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await res.json();
+      
+      const trackingDetails = document.getElementById('trackingDetails');
+      if (trackingDetails) trackingDetails.classList.remove('hidden');
+
+      const a = data.asset;
+      const trackSummary = document.getElementById('trackSummary');
+      if (trackSummary) {
+        trackSummary.innerHTML = `
+          <p><strong>Description:</strong> ${a.description}</p>
+          <p><strong>Item ID:</strong> ${a.itemID}</p>
+          <p><strong>Serial Number:</strong> ${a.serialNumber}</p>
+          <p><strong>Current Status:</strong> ${getStatusBadge(a.status)}</p>
+          <p><strong>Current Location:</strong> ${a.location || 'Head Office'}</p>
+          <p><strong>Current User:</strong> ${a.assignedTo ? `${a.assignedTo.username} (${a.assignedTo.staffID})` : 'None'}</p>
+          <p><strong>Department:</strong> ${a.department || 'N/A'}</p>
+        `;
+      }
+
+      const transBody = document.getElementById('trackTransferTable').querySelector('tbody');
+      if (transBody && !checkEmpty(data.transferHistory, transBody, 5)) {
+        transBody.innerHTML = data.transferHistory.map(t => `
+          <tr>
+            <td>${new Date(t.date).toLocaleDateString()}</td>
+            <td>${t.fromUserName || 'N/A'}</td>
+            <td>${t.toUserName}</td>
+            <td>${t.toDepartment}</td>
+            <td>${t.reason}</td>
+          </tr>
+        `).join('');
+      }
+
+      const maintBody = document.getElementById('trackMaintenanceTable').querySelector('tbody');
+      if (maintBody && !checkEmpty(data.maintenanceHistory, maintBody, 4)) {
+        maintBody.innerHTML = data.maintenanceHistory.map(m => `
+          <tr>
+            <td>${new Date(m.date).toLocaleDateString()}</td>
+            <td>${m.reason}</td>
+            <td>${m.cost}</td>
+            <td>${getStatusBadge(m.status)}</td>
+          </tr>
+        `).join('');
+      }
+    });
+  }
 
   if (window.location.pathname.includes('dashboard.html')) {
     fetchAssets();
@@ -121,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- UI MANAGEMENT ---
   const allSections = [
-    'registerSection', 'allocationSection', 'disposalSection', 
+    'registerSection', 'allocationSection', 'disposalSection', 'transferSection', 'trackingSection',
     'usersSection', 'adminReportsSection', 'searchResults',
     'requestSection', 'returnSection', 'maintenanceSection', 'userReportsSection',
     'editAssetSection', 'editUserSection'
@@ -141,7 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminBtnMap = {
     'btnShowRegister': 'registerSection',
     'btnShowAllocate': 'allocationSection',
+    'btnShowTransfer': 'transferSection',
     'btnShowDisposal': 'disposalSection',
+    'btnShowTracking': 'trackingSection',
     'btnShowUsers': 'usersSection',
     'btnShowAdminReports': 'adminReportsSection'
   };
@@ -189,15 +258,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Allocate Item
   const allocationForm = document.getElementById('allocationForm');
-  if (allocationForm) {
+  if (allocationForm && role === 'admin') {
     // Fetch users for selection
     const fetchUsers = async () => {
-      const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
-      const users = await res.json();
-      const userSelect = document.getElementById('allocUserId');
-      if (userSelect) {
-        userSelect.innerHTML = '<option value="">Select Staff</option>' + 
-          users.map(u => `<option value="${u._id}" data-dept="${u.department}">${u.username} (${u.staffID})</option>`).join('');
+      try {
+        const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+        const users = await res.json();
+        const userSelect = document.getElementById('allocUserId');
+        if (userSelect && Array.isArray(users)) {
+          userSelect.innerHTML = '<option value="">Select Staff</option>' + 
+            users.map(u => `<option value="${u._id}" data-dept="${u.department}">${u.username} (${u.staffID})</option>`).join('');
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
       }
     };
     fetchUsers();
@@ -246,27 +319,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Transfer Item
+  const transferForm = document.getElementById('transferForm');
+  if (transferForm && role === 'admin') {
+    const transAssetSelect = document.getElementById('transAssetId');
+    const transUserSelect = document.getElementById('transToUserId');
+    const transCurrentHolder = document.getElementById('transCurrentHolder');
+
+    // Fetch users for transfer selection
+    const fetchUsersForTransfer = async () => {
+      const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+      const users = await res.json();
+      if (!res.ok) return;
+      if (transUserSelect && Array.isArray(users)) {
+        transUserSelect.innerHTML = '<option value="">Select New Owner</option>' + 
+          users.map(u => `<option value="${u._id}">${u.username} (${u.staffID})</option>`).join('');
+      }
+    };
+    fetchUsersForTransfer();
+
+    transAssetSelect.addEventListener('change', async (e) => {
+      const assetId = e.target.value;
+      if (!assetId) {
+        transCurrentHolder.innerText = 'N/A';
+        return;
+      }
+      const res = await fetch('/api/assets', { headers: { 'Authorization': `Bearer ${token}` } });
+      const assets = await res.json();
+      const selected = assets.find(a => a._id === assetId);
+      if (selected && selected.assignedTo) {
+        transCurrentHolder.innerText = `${selected.assignedTo.username} (${selected.assignedTo.staffID}) in ${selected.department}`;
+      } else {
+        transCurrentHolder.innerText = 'None (Available)';
+      }
+    });
+
+    transferForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const assetID = transAssetSelect.value;
+      const toUserID = transUserSelect.value;
+      const toDepartment = document.getElementById('transToDept').value;
+      const reason = document.getElementById('transReason').value;
+
+      const res = await fetch(`/api/assets/${assetID}/transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ toUserID, toDepartment, reason })
+      });
+      if (res.ok) {
+        alert('Asset Transferred Successfully');
+        transferForm.reset();
+        transCurrentHolder.innerText = 'N/A';
+        document.getElementById('transferSection').classList.add('hidden');
+        fetchAssets();
+      } else {
+        const err = await res.json();
+        alert(err.error);
+      }
+    });
+  }
+
   // Manage Roles
   const fetchUserTable = async () => {
-    const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
-    const users = await res.json();
-    const tbody = document.getElementById('userTableBody');
-    if (tbody) {
-      if (!checkEmpty(users, tbody, 5)) {
-        tbody.innerHTML = users.map(u => `
-          <tr>
-            <td>${u.username}</td>
-            <td>${u.staffID}</td>
-            <td>${u.department}</td>
-            <td>${getStatusBadge(u.role)}</td>
-            <td>
-              <button onclick="openEditUser('${u._id}', '${u.username}', '${u.email}', '${u.staffID}', '${u.department}', '${u.role}')">Edit</button>
-              ${u.role === 'user' ? `<button onclick="updateRole('${u._id}', 'admin')">Make Admin</button>` : `<button onclick="updateRole('${u._id}', 'user')">Make User</button>`}
-              <button class="delete-btn" onclick="deleteUser('${u._id}')">Delete</button>
-            </td>
-          </tr>
-        `).join('');
+    try {
+      const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+      const users = await res.json();
+      const tbody = document.getElementById('userTableBody');
+      if (tbody && Array.isArray(users)) {
+        if (!checkEmpty(users, tbody, 5)) {
+          tbody.innerHTML = users.map(u => `
+            <tr>
+              <td>${u.username}</td>
+              <td>${u.staffID}</td>
+              <td>${u.department}</td>
+              <td>${getStatusBadge(u.role)}</td>
+              <td>
+                <button onclick="openEditUser('${u._id}', '${u.username}', '${u.email}', '${u.staffID}', '${u.department}', '${u.role}')">Edit</button>
+                ${u.role === 'user' ? `<button onclick="updateRole('${u._id}', 'admin')">Make Admin</button>` : `<button onclick="updateRole('${u._id}', 'user')">Make User</button>`}
+                <button class="delete-btn" onclick="deleteUser('${u._id}')">Delete</button>
+              </td>
+            </tr>
+          `).join('');
+        }
       }
+    } catch (err) {
+      console.error('Error fetching user table:', err);
     }
   };
 
@@ -405,15 +542,47 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.reportDate').forEach(el => el.innerText = new Date().toLocaleString());
 
     document.getElementById('adminStats').innerHTML = `
-      <div class="stat-box"><strong>${data.stats.totalAssets}</strong><span>Total Assets</span></div>
-      <div class="stat-box"><strong>${data.stats.totalRequests}</strong><span>Requests</span></div>
-      <div class="stat-box"><strong>${data.stats.totalReturns}</strong><span>Returns</span></div>
-      <div class="stat-box"><strong>${data.stats.totalAllocated}</strong><span>Allocated</span></div>
-      <div class="stat-box"><strong>${data.stats.totalDisposed}</strong><span>Disposed</span></div>
+      <div class="stat-box clickable" onclick="filterInventory('All')"><strong>${data.stats.totalAssets}</strong><span>Total Assets</span></div>
+      <div class="stat-box clickable" onclick="scrollToSection('pendingRequestsTable')"><strong>${data.stats.totalRequests}</strong><span>Requests</span></div>
+      <div class="stat-box clickable" onclick="scrollToSection('pendingReturnsTable')"><strong>${data.stats.totalReturns}</strong><span>Returns</span></div>
+      <div class="stat-box clickable" onclick="scrollToSection('pendingMaintenanceTable')"><strong>${data.stats.totalMaintenance}</strong><span>Maintenance</span></div>
+      <div class="stat-box clickable" onclick="filterInventory('Allocated')"><strong>${data.stats.totalAllocated}</strong><span>Allocated</span></div>
+      <div class="stat-box clickable" onclick="filterInventory('Disposed')"><strong>${data.stats.totalDisposed}</strong><span>Disposed</span></div>
     `;
 
+    window.scrollToSection = (id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.backgroundColor = '#fff9c4'; // Brief highlight
+        setTimeout(() => { el.style.backgroundColor = ''; }, 2000);
+      }
+    };
+
+    window.filterInventory = (status) => {
+      const inventoryBody = document.getElementById('fullInventoryTable').querySelector('tbody');
+      let filtered = data.fullInventory;
+      if (status !== 'All') {
+        filtered = data.fullInventory.filter(a => a.status === status);
+      }
+      
+      if (!checkEmpty(filtered, inventoryBody, 7)) {
+        inventoryBody.innerHTML = filtered.map(a => `
+          <tr>
+            <td>${a.itemID}</td>
+            <td>${a.description}</td>
+            <td>${a.serialNumber}</td>
+            <td>${getStatusBadge(a.status)}</td>
+            <td>${a.assignedTo ? a.assignedTo.username : 'N/A'}</td>
+            <td>${a.department || 'N/A'}</td>
+            <td>${a.value}</td>
+          </tr>
+        `).join('');
+      }
+    };
+
     const inventoryBody = document.getElementById('fullInventoryTable').querySelector('tbody');
-    if (!checkEmpty(data.fullInventory, inventoryBody, 7)) {
+    if (inventoryBody && Array.isArray(data.fullInventory) && !checkEmpty(data.fullInventory, inventoryBody, 7)) {
       inventoryBody.innerHTML = data.fullInventory.map(a => `
         <tr>
           <td>${a.itemID}</td>
@@ -428,13 +597,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const requestsBody = document.getElementById('pendingRequestsTable').querySelector('tbody');
-    if (!checkEmpty(data.requestedItems, requestsBody, 5)) {
+    if (requestsBody && Array.isArray(data.requestedItems) && !checkEmpty(data.requestedItems, requestsBody, 7)) {
       requestsBody.innerHTML = data.requestedItems.map(r => `
         <tr>
           <td>${r.description}</td>
+          <td>${r.specifications || 'N/A'}</td>
           <td>${r.reason}</td>
-          <td>${r.requestedBy.staffID}</td>
-          <td>${r.requestedBy.department}</td>
+          <td>${r.duration || 'Permanent'}</td>
+          <td>${r.timeline || 'N/A'}</td>
+          <td>${r.requestedBy.username} (${r.requestedBy.staffID})</td>
           <td>
             <button onclick="updateRequest('${r._id}', 'Approved')">Approve</button>
             <button onclick="updateRequest('${r._id}', 'Rejected')">Reject</button>
@@ -444,7 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const returnsBody = document.getElementById('pendingReturnsTable').querySelector('tbody');
-    if (!checkEmpty(data.returnMarkedItems, returnsBody, 5)) {
+    if (returnsBody && Array.isArray(data.returnMarkedItems) && !checkEmpty(data.returnMarkedItems, returnsBody, 5)) {
       returnsBody.innerHTML = data.returnMarkedItems.map(r => `
         <tr>
           <td>${r.asset ? r.asset.description : 'N/A'}</td>
@@ -459,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const maintBody = document.getElementById('pendingMaintenanceTable').querySelector('tbody');
-    if (!checkEmpty(data.pendingMaintenance, maintBody, 6)) {
+    if (maintBody && Array.isArray(data.pendingMaintenance) && !checkEmpty(data.pendingMaintenance, maintBody, 7)) {
       maintBody.innerHTML = data.pendingMaintenance.map(m => `
         <tr>
           <td>${m.asset ? m.asset.description : 'N/A'}</td>
@@ -467,18 +638,21 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${m.reason}</td>
           <td>${m.staffID}</td>
           <td>
-            ${m.status}
+            ${getStatusBadge(m.status)}
+          </td>
+          <td>
+            <input type="number" id="cost-${m._id}" value="${m.cost}" style="width: 80px;">
           </td>
           <td>
             ${m.status === 'Pending' ? `<button onclick="updateMaintenance('${m._id}', 'In Progress')">Start</button>` : ''}
-            <button onclick="updateMaintenance('${m._id}', 'Completed')">Complete</button>
+            <button onclick="updateMaintenance('${m._id}', 'Completed')">Complete & Save Cost</button>
           </td>
         </tr>
       `).join('');
     }
 
     const auditBody = document.getElementById('deletionAuditTable').querySelector('tbody');
-    if (!checkEmpty(data.deletionLogs, auditBody, 5)) {
+    if (auditBody && Array.isArray(data.deletionLogs) && !checkEmpty(data.deletionLogs, auditBody, 5)) {
       auditBody.innerHTML = data.deletionLogs.map(log => `
         <tr>
           <td>${log.action}</td>
@@ -535,11 +709,13 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.updateMaintenance = async (id, status) => {
+    const costInput = document.getElementById(`cost-${id}`);
+    const cost = costInput ? costInput.value : undefined;
     if (!confirm(`Change maintenance status to ${status}?`)) return;
     await fetch(`/api/maintenance/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, cost: cost ? parseFloat(cost) : undefined })
     });
     fetchAdminReports();
     fetchAssets();
@@ -588,6 +764,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Request Duration Toggle
+  const reqDuration = document.getElementById('reqDuration');
+  const timelineDiv = document.getElementById('timelineDiv');
+  const timelineInput = document.getElementById('reqTimeline');
+  if (timelineInput) {
+    timelineInput.min = new Date().toISOString().split('T')[0];
+  }
+  if (reqDuration && timelineDiv) {
+    reqDuration.addEventListener('change', (e) => {
+      if (e.target.value === 'Temporary') {
+        timelineDiv.classList.remove('hidden');
+      } else {
+        timelineDiv.classList.add('hidden');
+      }
+    });
+  }
+
   // Submit Request
   const requestItemForm = document.getElementById('requestItemForm');
   if (requestItemForm) {
@@ -595,7 +788,10 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const data = {
         description: document.getElementById('reqDescription').value,
+        specifications: document.getElementById('reqSpecifications').value,
         reason: document.getElementById('reqReason').value,
+        duration: document.getElementById('reqDuration').value,
+        timeline: document.getElementById('reqTimeline').value,
         staffID: document.getElementById('reqStaffID').value,
         department: document.getElementById('reqDept').value
       };
@@ -607,6 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         alert('Request Submitted');
         requestItemForm.reset();
+        if (timelineDiv) timelineDiv.classList.add('hidden');
         document.getElementById('requestSection').classList.add('hidden');
       }
     });

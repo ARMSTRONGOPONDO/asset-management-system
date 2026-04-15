@@ -14,6 +14,7 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       totalAssets,
       totalRequests,
       totalReturns,
+      totalMaintenance,
       totalAllocated,
       totalDisposed,
       requestedItems,
@@ -23,8 +24,9 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
       deletionLogs
     ] = await Promise.all([
       Asset.countDocuments(),
-      Request.countDocuments(),
-      Return.countDocuments(),
+      Request.countDocuments({ status: 'Pending' }),
+      Return.countDocuments({ status: 'Pending' }),
+      Maintenance.countDocuments({ status: { $ne: 'Completed' } }),
       Asset.countDocuments({ status: 'Allocated' }),
       Asset.countDocuments({ status: 'Disposed' }),
       Request.find({ status: 'Pending' }).populate('requestedBy', 'username staffID department'),
@@ -39,6 +41,7 @@ router.get('/admin', auth, auth.requireAdmin, async (req, res) => {
         totalAssets,
         totalRequests,
         totalReturns,
+        totalMaintenance,
         totalAllocated,
         totalDisposed
       },

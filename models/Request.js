@@ -5,6 +5,9 @@ const RequestSchema = new mongoose.Schema({
   reason:      { type: String, required: true },
   staffID:     { type: String, required: true },
   department:  { type: String, required: true },
+  specifications: { type: String, default: "" },
+  duration: { type: String, enum: ['Permanent', 'Temporary'], default: 'Permanent' },
+  timeline: { type: String, default: "" },
   status:      { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
   requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   createdAt:   { type: Date, default: Date.now }
